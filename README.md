@@ -14,6 +14,22 @@ npm run build             # type-check + production build into dist/
 npm run mock              # optional: fake gateway on :8090 (set VITE_GATEWAY_URL=http://localhost:8090)
 ```
 
+### Testing against the real backend
+
+Both scripts need the backend stack running (`docker compose up -d` in `../mss301-vslplatform-project`);
+they sign a dev admin token with `JWT_SECRET` from that repo's `.env` (override with `JWT_SECRET`,
+`ADMIN_ID`, `BACKEND_DIR`). Every account, post, sign and topic they create is removed at the end
+(`KEEP_DATA=1` keeps it).
+
+```bash
+npm run smoke      # calls every function in src/services against the gateway (~125 checks)
+npm run dev        # in another terminal, then:
+npm run ui-check   # clicks through every screen in Chromium, screenshots into scripts/.ui-shots/
+```
+
+`ui-check` uses `CHROME_PATH`, else the newest Playwright Chromium in `%LOCALAPPDATA%/ms-playwright`,
+else an installed Chrome. Chrome's fake camera lets it record and score a Studio clip.
+
 Docker: start the backend stack first (`mss301-vslplatform-project`, `docker compose up -d`), then
 `docker compose up -d --build` here. nginx serves `dist/` on port 3000 and proxies `/api/` to
 `http://api-gateway:8080` over the backend's `mss301-vslplatform-project_vsl-net` network.
