@@ -42,6 +42,23 @@ export const excerpt = (s: string, n = 160) => {
   return flat.length > n ? `${flat.slice(0, n).trimEnd()}…` : flat;
 };
 
+// A post's text: lists carry a 200-char `excerpt`, the detail view the full `content`.
+export const postBody = (p: { content?: string; excerpt?: string }) => p.content ?? p.excerpt ?? '';
+
+type Person = { displayName?: string | null; fullName?: string | null; username?: string | null } | null | undefined;
+export const nameOf = (u: Person, fallback = 'Someone') =>
+  u?.displayName || u?.fullName || u?.username || fallback;
+
+const NOTIFICATION_TEXT: Record<string, string> = {
+  LIKE: 'liked your post',
+  COMMENT: 'commented on your post',
+  REPLY: 'replied to your comment',
+  SHARE: 'shared a post with you',
+  FOLLOW: 'started following you',
+  MENTION: 'mentioned you',
+};
+export const notificationText = (type: string) => NOTIFICATION_TEXT[type] || 'sent you a notification';
+
 // Labels for the backend's weekActivity (7 entries, oldest first, last = today).
 export const lastSevenDays = () =>
   Array.from({ length: 7 }, (_, i) => new Date(Date.now() - (6 - i) * 864e5)

@@ -9,7 +9,7 @@ import { useLearning } from '../context/LearningContext';
 import { useUI } from '../context/UIContext';
 import { blogApi } from '../services';
 import type { BlogResponse } from '../models';
-import { dayPart, firstName, fmtLongDate, lastSevenDays } from '../lib/format';
+import { dayPart, firstName, fmtLongDate, lastSevenDays, nameOf } from '../lib/format';
 import { usePrefs } from '../lib/prefs';
 
 export default function Today() {
@@ -170,7 +170,7 @@ export default function Today() {
           <section className="rail-block">
             <h2 className="rail-title">From the common room</h2>
             {post ? (
-              <Link className="pulse-item" to={`/community?post=${post.id}`}><span className="kicker">{post.authorName} · {post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}</span><strong>{post.title}</strong></Link>
+              <Link className="pulse-item" to={`/community?post=${post.id}`}><span className="kicker">{nameOf(post.author)} · {post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}</span><strong>{post.title}</strong></Link>
             ) : (
               <p>No posts yet — be the first to share a tip.</p>
             )}

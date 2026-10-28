@@ -1,4 +1,4 @@
-// Shapes mirror the MSS backend DTOs / DB entities. Keep in sync with the Java side.
+// Shapes mirror the MSS backend DTOs (learning-service). Keep in sync with the Java side.
 
 export interface VocabularySuggestionResponse {
   id: number;
@@ -9,8 +9,7 @@ export interface VocabularySuggestionResponse {
   reviewedAt: string | null;
   categoryId: number;
   categoryName: string;
-  requesterId: number;
-  requesterName: string;
+  requesterId: number; // names come from identity /users/summaries
 }
 
 export interface VocabularyExistsResult {

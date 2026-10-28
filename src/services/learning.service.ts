@@ -15,6 +15,8 @@ export const categoryApi = {
   update: (id: number, body: CategoryRequest) =>
     unwrap(http.put<ApiResponse<CategoryResponse>>(`/categories/${id}`, body)),
   remove: (id: number) => unwrap(http.delete<ApiResponse<void>>(`/categories/${id}`)),
+  uploadImage: (id: number, image: File) =>
+    unwrap(http.post<ApiResponse<CategoryResponse>>(`/categories/${id}/image`, formData({ image }), { timeout: 60000 })),
 };
 
 export const vocabularyApi = {
@@ -29,20 +31,31 @@ export const vocabularyApi = {
   update: (id: number, body: VocabularyRequest) =>
     unwrap(http.put<ApiResponse<VocabularyResponse>>(`/vocabularies/${id}`, body)),
   remove: (id: number) => unwrap(http.delete<ApiResponse<void>>(`/vocabularies/${id}`)),
+  uploadImage: (id: number, image: File) =>
+    unwrap(http.post<ApiResponse<VocabularyResponse>>(`/vocabularies/${id}/image`, formData({ image }), { timeout: 60000 })),
+  // The backend transcodes the clip with FFmpeg (ai-service) before storing it, so this can be slow.
+  uploadVideo: (id: number, video: File, expectedId?: number) =>
+    unwrap(http.post<ApiResponse<VocabularyResponse>>(
+      `/vocabularies/${id}/tutorial-video${expectedId != null ? `?${q({ expectedId })}` : ''}`,
+      formData({ video }),
+      { timeout: 180000 },
+    )),
 };
 
 export const practiceApi = {
   progress: () => unwrap(http.get<ApiResponse<UserProgressResponse[]>>('/practice/progress')),
   stats: () => unwrap(http.get<ApiResponse<PracticeStatsResponse>>('/practice/stats')),
   achievements: () => unwrap(http.get<ApiResponse<AchievementResponse[]>>('/practice/achievements')),
+  // Scored by vocabularyId: several words can share one AI class (one sign, many meanings),
+  // and the backend records the attempt on exactly this word.
   // startFrac/endFrac (0..1) trim the clip to the part that contains the movement;
   // the model samples its 16 frames inside that window.
-  evaluate: (video: File, expectedId: number, startFrac = 0, endFrac = 1) =>
+  evaluate: (video: File, vocabularyId: number, startFrac = 0, endFrac = 1) =>
     unwrap(http.post<ApiResponse<EvaluationResponse>>(
       '/practice/evaluate',
       formData({
         video,
-        expectedId: String(expectedId),
+        vocabularyId: String(vocabularyId),
         startFrac: startFrac.toFixed(4),
         endFrac: endFrac.toFixed(4),
       }),

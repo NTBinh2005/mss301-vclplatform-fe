@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import Icon from '../../components/Icon';
 import { Alert, EmptyState, Loading, Spinner } from '../../components/common';
 import { useUI } from '../../context/UIContext';
@@ -66,21 +66,32 @@ export default function AdminCategories() {
 function CategoryForm({ category, onSaved }: { category?: CategoryResponse; onSaved: () => void }) {
   const [name, setName] = useState(category?.name || '');
   const [description, setDescription] = useState(category?.description || '');
-  const [imageUrl, setImageUrl] = useState(category?.imageUrl || '');
+  const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!image) { setPreview(''); return; }
+    const url = URL.createObjectURL(image);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [image]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { setError('A topic needs a name.'); return; }
     setBusy(true); setError('');
-    const body = { name: name.trim(), description: description.trim() || undefined, imageUrl: imageUrl.trim() || undefined };
+    const body = { name: name.trim(), description: description.trim() || undefined };
     try {
-      if (category) await categoryApi.update(category.id, body); else await categoryApi.create(body);
+      const saved = category ? await categoryApi.update(category.id, body) : await categoryApi.create(body);
+      // The image is stored in MinIO by learning-service once the topic exists.
+      if (image) await categoryApi.uploadImage(saved.id, image);
       onSaved();
     } catch (err) { setError(apiErrorMessage(err, 'Could not save the topic.')); setBusy(false); }
   };
 
+  const shown = preview || category?.imageUrl;
   return (
     <form onSubmit={submit} noValidate>
       <p className="kicker">{category ? 'Edit topic' : 'New topic'}</p>
@@ -91,8 +102,15 @@ function CategoryForm({ category, onSaved }: { category?: CategoryResponse; onSa
           <input id="cf-name" className="tinput" value={name} onChange={e => setName(e.target.value)} maxLength={255} placeholder="Greetings" autoFocus /></div>
         <div className="field"><label htmlFor="cf-desc">Description</label>
           <input id="cf-desc" className="tinput" value={description} onChange={e => setDescription(e.target.value)} maxLength={255} placeholder="The signs that open every conversation." /></div>
-        <div className="field"><label htmlFor="cf-img">Image URL</label>
-          <input id="cf-img" className="tinput" value={imageUrl} onChange={e => setImageUrl(e.target.value)} maxLength={500} placeholder="https://…" /></div>
+        <div className="field">
+          <span className="label">Cover image</span>
+          {shown && <img src={shown} alt="" className="post-thumb" style={{ maxHeight: 140 }} />}
+          <div className="filepick">
+            <label className="btn btn-ghost btn-sm"><Icon name="upload" size={14} /> {shown ? 'Replace image' : 'Choose an image'}
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={e => setImage(e.target.files?.[0] || null)} /></label>
+            <span className="faint">{image ? image.name : 'JPG, PNG, WEBP or GIF'}</span>
+          </div>
+        </div>
       </div>
       <div className="form-actions"><button className="btn" disabled={busy}>{busy ? <Spinner /> : <Icon name="check" size={15} />} Save</button></div>
     </form>

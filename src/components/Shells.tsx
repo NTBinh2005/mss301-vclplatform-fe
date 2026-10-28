@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
 import Icon, { type IconName } from './Icon';
 import MentorDrawer from './MentorDrawer';
@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { LearningProvider, useLearning } from '../context/LearningContext';
 import { LayerHost, useUI } from '../context/UIContext';
 import { modKey } from '../lib/format';
+import { adminApi, notificationApi } from '../services';
 
 // Profile lives behind the avatar on wide screens, and as the last tab on narrow ones.
 const ROUTES: [string, string, IconName][] = [
@@ -54,8 +55,12 @@ function LearnerShell() {
   const { user } = useAuth();
   const { stats } = useLearning();
   const ui = useUI();
+  const { pathname } = useLocation();
+  const [unread, setUnread] = useState(0);
   useScrollTop();
   const streak = stats?.currentStreak ?? 0;
+
+  useEffect(() => { notificationApi.unreadCount().then(setUnread).catch(() => {}); }, [pathname]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -75,7 +80,7 @@ function LearnerShell() {
         <Brand to="/today" />
         <nav className="mainnav" aria-label="Primary">
           {ROUTES.map(([to, label]) => (
-            <NavLink key={to} to={to}>{label}</NavLink>
+            <NavLink key={to} to={to}>{label}{to === '/community' && unread > 0 && <span className="badge-dot" aria-label={`${unread} unread notifications`}>{unread}</span>}</NavLink>
           ))}
         </nav>
         <div className="top-actions">
@@ -116,7 +121,17 @@ const ADMIN_ROUTES: [string, string][] = [
 
 function AdminShell() {
   const { user, logout } = useAuth();
+  const { pathname } = useLocation();
+  const [pending, setPending] = useState<Record<string, number>>({});
   useScrollTop();
+
+  // Open reports / sign requests, refreshed on every admin navigation.
+  useEffect(() => {
+    Promise.allSettled([adminApi.pendingReports(), adminApi.pendingSuggestions()]).then(([r, s]) => setPending({
+      '/admin/reports': r.status === 'fulfilled' ? r.value : 0,
+      '/admin/requests': s.status === 'fulfilled' ? s.value : 0,
+    }));
+  }, [pathname]);
   return (
     <>
       <header className="topbar">
@@ -133,7 +148,9 @@ function AdminShell() {
         <div className="view" style={{ paddingTop: 0 }}>
           <nav className="admin-sub" aria-label="Admin sections">
             {ADMIN_ROUTES.map(([to, label]) => (
-              <NavLink key={to} to={to} end={to === '/admin'} className={({ isActive }) => (isActive ? 'active' : '')}>{label}</NavLink>
+              <NavLink key={to} to={to} end={to === '/admin'} className={({ isActive }) => (isActive ? 'active' : '')}>
+                {label}{pending[to] ? <span className="badge-dot" aria-label={`${pending[to]} waiting`}>{pending[to]}</span> : null}
+              </NavLink>
             ))}
           </nav>
           <Outlet />

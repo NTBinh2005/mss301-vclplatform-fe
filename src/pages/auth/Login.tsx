@@ -21,14 +21,14 @@ export default function Login() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (busy) return;
-    const fieldErrors = { email: v.email(email), password: v.required(password, 'Password') };
+    const fieldErrors = { email: v.required(email, 'Username or email'), password: v.required(password, 'Password') };
     setErrors(fieldErrors);
     if (!v.isValid(fieldErrors)) return;
     setFailure('');
     setBusy(true);
     try {
       const user = await login(email.trim(), password);
-      toast(`Welcome back, ${user.fullName.split(' ').pop()}`);
+      toast(`Welcome back, ${(user.fullName || user.username).split(' ').pop()}`);
       navigate(user.role === 'ADMIN' ? '/admin' : from || '/today', { replace: true });
     } catch (err) {
       setFailure(err instanceof Error ? err.message : 'Sign-in failed. Please try again.');
@@ -43,8 +43,8 @@ export default function Login() {
       <p className="lede">Your lessons, review queue and Studio scores are right where you left them.</p>
       {failure && <div style={{ marginBottom: 18 }}><Alert>{failure}</Alert></div>}
       <form onSubmit={submit} noValidate>
-        <Field label="Email" error={errors.email}>
-          <input className="tinput" type="email" autoComplete="email" placeholder="you@email.com" value={email} aria-label="Email"
+        <Field label="Username or email" error={errors.email}>
+          <input className="tinput" autoComplete="username" placeholder="minhanh or you@email.com" value={email} aria-label="Username or email"
             onChange={e => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); setFailure(''); }} />
         </Field>
         <Field label="Password" error={errors.password}

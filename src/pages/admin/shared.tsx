@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { apiErrorMessage } from '../../api/errors';
 
@@ -16,18 +16,24 @@ export function useLoad<T>(fn: () => Promise<T>): Loaded<T> {
   const [error, setError] = useState('');
   const [missing, setMissing] = useState(false);
   const [loading, setLoading] = useState(true);
+  // Always call the latest loader, so filters captured in its closure are current.
+  const fnRef = useRef(fn);
+  fnRef.current = fn;
+  const seq = useRef(0);
 
   const reload = useCallback(() => {
+    const my = ++seq.current;
     setLoading(true);
-    fn()
-      .then(d => { setDataState(d); setError(''); setMissing(false); })
+    fnRef.current()
+      .then(d => { if (my !== seq.current) return; setDataState(d); setError(''); setMissing(false); })
       .catch(err => {
+        if (my !== seq.current) return;
         const status = isAxiosError(err) ? err.response?.status : undefined;
         setMissing(status === 404 || status === 502 || status === 503);
         setError(apiErrorMessage(err, 'Could not load this section.'));
       })
-      .finally(() => setLoading(false));
-  }, []); // the loader is a stable module-level call
+      .finally(() => { if (my === seq.current) setLoading(false); });
+  }, []);
 
   useEffect(() => { reload(); }, [reload]);
   return { data, error, missing, loading, reload, setData: f => setDataState(f) };

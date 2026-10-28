@@ -50,7 +50,7 @@ export default function Landing() {
               {stats && (
                 <div className="figs" role="list" style={{ margin: '34px 0 0' }}>
                   <div className="fig" role="listitem"><b>{stats.totalVocabs}</b><span>signs to learn</span></div>
-                  <div className="fig" role="listitem"><b>{stats.totalUsers}</b><span>learners</span></div>
+                  <div className="fig" role="listitem"><b>{stats.totalUsers ?? '—'}</b><span>learners</span></div>
                   <div className="fig" role="listitem"><b>{Math.round(stats.satisfactionRate)}%</b><span>would recommend</span></div>
                 </div>
               )}

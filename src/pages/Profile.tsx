@@ -1,14 +1,14 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Icon, { type IconName } from '../components/Icon';
 import { Hand } from '../components/Hand';
 import { Alert, Loading, Spinner } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useLearning } from '../context/LearningContext';
 import { useUI } from '../context/UIContext';
-import { userApi } from '../services';
+import { followApi, userApi } from '../services';
 import { apiErrorMessage } from '../api/errors';
-import type { PracticeStatsResponse } from '../models';
+import type { FollowStatusResponse, PracticeStatsResponse } from '../models';
 import { initials, lastSevenDays, timeAgo } from '../lib/format';
 import { updatePrefs, usePrefs } from '../lib/prefs';
 import * as v from '../lib/validation';
@@ -39,9 +39,11 @@ export default function Profile() {
   const [drawn, setDrawn] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [emailNotes, setEmailNotes] = useState<boolean | null>(user?.emailNotificationsEnabled ?? null);
+  const [social, setSocial] = useState<FollowStatusResponse | null>(null);
 
   useEffect(() => { const r = requestAnimationFrame(() => setDrawn(true)); return () => cancelAnimationFrame(r); }, []);
-  useEffect(() => { userApi.profile().then(p => setEmailNotes(p.emailNotificationsEnabled ?? null)).catch(() => {}); }, []);
+  useEffect(() => { userApi.me().then(p => { setUser(p); setEmailNotes(p.emailNotificationsEnabled); }).catch(() => {}); }, [setUser]);
+  useEffect(() => { if (user) followApi.stats(user.userId).then(setSocial).catch(() => {}); }, [user?.userId]);
 
   if (L.loading || !user) return <section className="view"><Loading /></section>;
 
@@ -65,28 +67,27 @@ export default function Profile() {
     if (!file) return;
     setUploading(true);
     try {
-      const url = await userApi.uploadAvatar(file);
-      setUser({ ...user, avatarUrl: typeof url === 'string' ? url : user.avatarUrl });
+      setUser(await userApi.uploadAvatar(file));
       ui.toast('Photo updated');
     } catch (err) { ui.toast(apiErrorMessage(err, 'Could not upload the photo'), 'alert'); } finally { setUploading(false); }
   };
 
+  const removeAvatar = async () => {
+    setUploading(true);
+    try { setUser(await userApi.removeAvatar()); ui.toast('Photo removed', 'trash'); }
+    catch (err) { ui.toast(apiErrorMessage(err, 'Could not remove the photo'), 'alert'); } finally { setUploading(false); }
+  };
+
   const toggleEmail = async () => {
     const next = !emailNotes;
-    try { await userApi.setEmailNotifications(next); setEmailNotes(next); ui.toast(next ? 'Email notifications on' : 'Email notifications off', 'mail'); }
+    try { setUser(await userApi.setEmailNotifications(next)); setEmailNotes(next); ui.toast(next ? 'Email notifications on' : 'Email notifications off', 'mail'); }
     catch (err) { ui.toast(apiErrorMessage(err, 'Could not update notifications'), 'alert'); }
   };
 
-  const deleteAccount = async () => {
-    const ok = await ui.confirm({
-      title: 'Delete your account?',
-      body: 'Your progress, streak, achievements and posts will be removed for good. This cannot be undone.',
-      confirmLabel: 'Delete account', danger: true,
-    });
-    if (!ok) return;
-    try { await userApi.deleteAccount(); await logout(); navigate('/', { replace: true }); }
-    catch (err) { ui.toast(apiErrorMessage(err, 'Could not delete the account'), 'alert'); }
-  };
+  const deleteAccount = () => ui.openModal(
+    <DeleteAccountForm onDeleted={async () => { await logout(); navigate('/', { replace: true }); ui.toast('Your account has been deleted', 'trash'); }} />,
+    'Delete account',
+  );
 
   return (
     <section className="view">
@@ -94,11 +95,17 @@ export default function Profile() {
         <span className="prof-hand" aria-hidden="true"><Hand frame={{ shape: 'flat', rot: -6 }} size={300} /></span>
         <div className="prof-avatar">
           {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initials(user.fullName)}
-          <label>{uploading ? <Spinner /> : 'Change'}<input type="file" accept="image/*" className="sr-only" onChange={e => uploadAvatar(e.target.files?.[0])} /></label>
+          <label>{uploading ? <Spinner /> : 'Change'}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={e => uploadAvatar(e.target.files?.[0])} /></label>
         </div>
         <div style={{ position: 'relative' }}>
           <p className="kicker">@{user.username} · {s ? `${s.proficiency}% proficiency` : 'Learner'}{since ? ` · since ${since}` : ''}</p>
-          <h1 className="display sm">{user.fullName}</h1>
+          <h1 className="display sm">{user.fullName || user.username}</h1>
+          {user.bio && <p className="muted" style={{ maxWidth: '60ch', marginTop: 4 }}>{user.bio}</p>}
+          <p className="faint" style={{ fontSize: 13.5, marginTop: 6 }}>
+            {social ? <>{social.followerCount} followers · {social.followingCount} following · {social.friendCount} friends · </> : null}
+            <Link className="linkbtn" to={`/people/${user.userId}`}>Your public page</Link>
+            {user.avatarUrl && <> · <button className="linkbtn" onClick={removeAvatar} disabled={uploading}>Remove photo</button></>}
+          </p>
           <div className="goal-line">
             <Icon name="flag" size={16} /><span>Daily goal:</span>
             <span className="goal-stepper">
@@ -177,7 +184,7 @@ export default function Profile() {
             </div>
           )}
           <div className="settings-row">
-            <span style={{ flex: 1 }}>Profile details<br /><small style={{ color: 'var(--ink-2)' }}>Name, username and email</small></span>
+            <span style={{ flex: 1 }}>Profile details<br /><small style={{ color: 'var(--ink-2)' }}>Display name and bio</small></span>
             <button className="btn btn-ghost btn-sm" onClick={() => ui.openModal(<ProfileForm />, 'Edit profile')}><Icon name="edit" size={14} /> Edit</button>
           </div>
           <div className="settings-row">
@@ -201,32 +208,24 @@ export default function Profile() {
 function ProfileForm() {
   const { user, setUser } = useAuth();
   const ui = useUI();
-  const [f, setF] = useState({ fullName: user?.fullName || '', username: user?.username || '', email: user?.email || '' });
+  const [fullName, setFullName] = useState(user?.fullName || '');
+  const [bio, setBio] = useState(user?.bio || '');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [failure, setFailure] = useState('');
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const fieldErrors = { fullName: v.fullName(f.fullName), username: v.username(f.username), email: v.email(f.email) };
+    const fieldErrors = { fullName: v.fullName(fullName), bio: bio.length > 500 ? 'The bio can be at most 500 characters.' : '' };
     setErrors(fieldErrors);
     if (!v.isValid(fieldErrors)) return;
     setBusy(true); setFailure('');
     try {
-      const updated = await userApi.updateProfile({ fullName: f.fullName.trim(), username: f.username.trim(), email: f.email.trim() });
-      setUser({ ...user!, ...updated });
+      setUser(await userApi.updateProfile({ fullName: fullName.trim(), bio: bio.trim() }));
       ui.closeLayer();
       ui.toast('Profile saved');
     } catch (err) { setFailure(apiErrorMessage(err, 'Could not save your profile.')); setBusy(false); }
   };
-
-  const input = (k: keyof typeof f, label: string, type = 'text') => (
-    <div className={`field ${errors[k] ? 'invalid' : ''}`}>
-      <label htmlFor={`pf-${k}`}>{label}</label>
-      <input id={`pf-${k}`} className="tinput" type={type} value={f[k]} onChange={e => { setF(p => ({ ...p, [k]: e.target.value })); setErrors(p => ({ ...p, [k]: '' })); }} />
-      {errors[k] && <span className="err">{errors[k]}</span>}
-    </div>
-  );
 
   return (
     <form onSubmit={submit} noValidate>
@@ -234,9 +233,23 @@ function ProfileForm() {
       <h2>Profile details</h2>
       {failure && <div style={{ margin: '12px 0' }}><Alert>{failure}</Alert></div>}
       <div style={{ marginTop: 18 }}>
-        {input('fullName', 'Full name')}
-        {input('username', 'Username')}
-        {input('email', 'Email', 'email')}
+        <div className={`field ${errors.fullName ? 'invalid' : ''}`}>
+          <label htmlFor="pf-name">Full name</label>
+          <input id="pf-name" className="tinput" value={fullName} maxLength={100}
+            onChange={e => { setFullName(e.target.value); setErrors(p => ({ ...p, fullName: '' })); }} />
+          {errors.fullName && <span className="err">{errors.fullName}</span>}
+        </div>
+        <div className={`field ${errors.bio ? 'invalid' : ''}`}>
+          <label htmlFor="pf-bio">Bio</label>
+          <textarea id="pf-bio" className="tarea" value={bio} maxLength={500} placeholder="A line about you and why you sign."
+            onChange={e => { setBio(e.target.value); setErrors(p => ({ ...p, bio: '' })); }} />
+          {errors.bio ? <span className="err">{errors.bio}</span> : <span className="hint">{bio.length}/500</span>}
+        </div>
+        <div className="field">
+          <span className="label">Username and email</span>
+          <span className="muted">@{user?.username} · {user?.email}</span>
+          <span className="hint">These identify your account and cannot be changed here.</span>
+        </div>
       </div>
       <div className="form-actions"><button className="btn" disabled={busy}>{busy ? <Spinner /> : <Icon name="check" size={15} />} Save</button></div>
     </form>
@@ -263,7 +276,7 @@ function PasswordForm() {
     if (!v.isValid(fieldErrors)) return;
     setBusy(true); setFailure('');
     try {
-      await userApi.updatePassword({ oldPassword: oldPw, newPassword: pw });
+      await userApi.changePassword(oldPw, pw);
       ui.closeLayer();
       ui.toast('Password changed', 'lock');
     } catch (err) { setFailure(apiErrorMessage(err, 'Could not change the password.')); setBusy(false); }
@@ -284,10 +297,40 @@ function PasswordForm() {
       {failure && <div style={{ margin: '12px 0' }}><Alert>{failure}</Alert></div>}
       <div style={{ marginTop: 18 }}>
         {row('old', 'Current password', oldPw, setOldPw)}
-        {row('pw', 'New password', pw, setPw, '8–12 characters, with upper case, lower case and a number.')}
+        {row('pw', 'New password', pw, setPw, v.PASSWORD_HINT)}
         {row('pw2', 'Repeat new password', pw2, setPw2)}
       </div>
       <div className="form-actions"><button className="btn" disabled={busy}>{busy ? <Spinner /> : <Icon name="lock" size={15} />} Change password</button></div>
+    </form>
+  );
+}
+
+// identity soft-deletes and anonymises the account; the password proves it is the owner.
+function DeleteAccountForm({ onDeleted }: { onDeleted: () => void }) {
+  const [pw, setPw] = useState('');
+  const [failure, setFailure] = useState('');
+  const [busy, setBusy] = useState(false);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!pw) { setFailure('Enter your password to confirm.'); return; }
+    setBusy(true); setFailure('');
+    try { await userApi.deleteAccount(pw); onDeleted(); }
+    catch (err) { setFailure(apiErrorMessage(err, 'Could not delete the account.')); setBusy(false); }
+  };
+  return (
+    <form onSubmit={submit} noValidate>
+      <p className="kicker">Please confirm</p>
+      <h2>Delete your account?</h2>
+      <p className="muted" style={{ marginTop: 8 }}>You will be signed out and your name, email and photo are erased. This cannot be undone.</p>
+      {failure && <div style={{ margin: '12px 0' }}><Alert>{failure}</Alert></div>}
+      <div className="field" style={{ marginTop: 18 }}>
+        <label htmlFor="da-pw">Password</label>
+        <input id="da-pw" className="tinput" type="password" autoComplete="current-password" value={pw}
+          onChange={e => { setPw(e.target.value); setFailure(''); }} autoFocus />
+      </div>
+      <div className="form-actions">
+        <button className="btn btn-danger" disabled={busy}>{busy ? <Spinner /> : <Icon name="trash" size={15} />} Delete account</button>
+      </div>
     </form>
   );
 }

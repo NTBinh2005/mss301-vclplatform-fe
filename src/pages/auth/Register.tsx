@@ -101,7 +101,7 @@ export default function Register() {
             <input className="tinput" type="email" autoComplete="email" placeholder="you@email.com" value={form.email} aria-label="Email"
               onChange={e => set('email')(e.target.value)} />
           </Field>
-          <Field label="Password" error={errors.password} hint="8–12 characters, with upper case, lower case and a number.">
+          <Field label="Password" error={errors.password} hint={v.PASSWORD_HINT}>
             <PasswordInput label="Password" value={form.password} autoComplete="new-password" onChange={set('password')} />
           </Field>
           <div className="form-actions">

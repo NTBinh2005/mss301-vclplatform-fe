@@ -315,3 +315,27 @@ main{overflow-x:clip}
   .attempt-row{flex-wrap:wrap}
   .filepick .faint{max-width:100%}
 }
+
+/* ---------- @mention picker ---------- */
+.mention-wrap{position:relative;flex:1;min-width:0;display:flex}
+.mention-wrap input{flex:1}
+.mention-list{position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:5;display:flex;flex-direction:column;background:var(--paper);border:1.5px solid var(--line-2);border-radius:var(--r-s);box-shadow:0 10px 30px rgba(34,26,18,.14);overflow:hidden}
+.mention-list button{display:flex;align-items:center;gap:10px;padding:8px 12px;text-align:left;font-size:13.5px}
+.mention-list button.on,.mention-list button:hover{background:var(--paper-2)}
+
+/* ---------- share / people ---------- */
+.share-panel{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 16px}
+.people-list{display:flex;flex-wrap:wrap;gap:8px}
+.person-row{display:flex;align-items:center;gap:12px;flex:1 1 260px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-s)}
+.person-row:hover{background:var(--paper-2)}
+.admin-sub .badge-dot,.mainnav .badge-dot{margin-left:6px;vertical-align:1px}
+
+/* ---------- Studio: signer framing + hand feedback ---------- */
+.cam-guide{position:absolute;border:2px dashed rgba(246,240,228,.7);border-radius:10px;pointer-events:none;opacity:0;transition:opacity .3s,left .15s,top .15s,width .15s,height .15s}
+.hand-fb{margin-top:14px;border:1px solid var(--studio-line);border-radius:var(--r-s);padding:12px 14px;font-size:13.5px}
+.hand-fb ul{margin:8px 0 0;padding-left:18px}
+.hand-fb li{margin:3px 0}
+.hand-fb li.good{color:#9fd6a6}
+.hand-fb li.warn{color:#f0a37c}
+.hand-fb .scores{display:flex;gap:18px;margin-top:6px}
+.hand-fb .scores b{font-family:var(--fd);font-size:20px}

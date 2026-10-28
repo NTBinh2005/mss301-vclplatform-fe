@@ -2,7 +2,8 @@
 // Each function returns an error message, or '' when the value is valid.
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+
+export const PASSWORD_HINT = '6–100 characters.';
 
 export const required = (v: string, label: string) => (v.trim() ? '' : `${label} is required.`);
 
@@ -15,7 +16,7 @@ export function text(v: string, label: string, max?: number) {
 export function email(v: string) {
   const t = v.trim();
   if (!t) return 'Email is required.';
-  if (v.length > 255) return 'Email must be at most 255 characters.';
+  if (v.length > 100) return 'Email must be at most 100 characters.';
   if (!EMAIL_RE.test(t)) return 'That does not look like an email address.';
   return '';
 }
@@ -29,14 +30,13 @@ export function username(v: string) {
 
 export function fullName(v: string) {
   if (!v.trim()) return 'Full name is required.';
-  if (v.length > 255) return 'Full name must be at most 255 characters.';
+  if (v.length > 100) return 'Full name must be at most 100 characters.';
   return '';
 }
 
 export function password(v: string) {
   if (!v) return 'Password is required.';
-  if (v.length < 8 || v.length > 12) return 'Password must be 8–12 characters.';
-  if (!PASSWORD_RE.test(v)) return 'Use at least one lowercase letter, one uppercase letter and one number.';
+  if (v.length < 6 || v.length > 100) return 'Password must be 6–100 characters.';
   return '';
 }
 

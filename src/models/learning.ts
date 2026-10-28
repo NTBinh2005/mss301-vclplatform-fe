@@ -1,4 +1,4 @@
-// Shapes mirror the MSS backend DTOs / DB entities. Keep in sync with the Java side.
+// Shapes mirror the MSS backend DTOs (learning-service). Keep in sync with the Java side.
 
 export interface CategoryResponse {
   id: number;
@@ -76,14 +76,12 @@ export interface AttemptResponse {
 export interface CategoryRequest {
   name: string;
   description?: string;
-  imageUrl?: string;
 }
 
+/** Media (image, tutorial video) is uploaded separately, after the sign exists. */
 export interface VocabularyRequest {
   categoryId: number;
   word: string;
   description?: string;
-  videoTutorialUrl?: string;
-  imageUrl?: string;
   expectedId?: number;
 }

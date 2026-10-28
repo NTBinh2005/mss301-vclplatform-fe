@@ -2,25 +2,28 @@ import { type FormEvent, useEffect, useState } from 'react';
 import Icon from '../components/Icon';
 import PostView from '../components/PostView';
 import { Alert, EmptyState, Loading, Spinner } from '../components/common';
+import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
-import { myBlogApi } from '../services';
+import { blogApi } from '../services';
 import { apiErrorMessage } from '../api/errors';
 import type { BlogResponse, BlogStatus } from '../models';
-import { excerpt, timeAgo } from '../lib/format';
+import { excerpt, postBody, timeAgo } from '../lib/format';
 import { CommunityHeader } from './Community';
 
 const STATUS_PILL: Record<BlogStatus, [string, string]> = {
   PUBLISHED: ['Published', 'ink'],
   DRAFT: ['Draft', 'dashed'],
-  REMOVED: ['Removed', 'lacquer'],
+  HIDDEN: ['Removed', 'lacquer'],
 };
 
 export default function MyPosts() {
+  const { user } = useAuth();
   const ui = useUI();
   const [posts, setPosts] = useState<BlogResponse[] | null>(null);
   const [error, setError] = useState('');
 
-  const load = () => myBlogApi.list(0, 100)
+  // As the author, /blogs/user/{me} also returns drafts and posts a moderator removed.
+  const load = () => blogApi.byAuthor(user!.userId, 0, 50)
     .then(r => { setPosts(r.content); setError(''); })
     .catch(err => { setPosts([]); setError(apiErrorMessage(err, 'Could not load your posts.')); });
   useEffect(() => { load(); }, []);
@@ -30,12 +33,19 @@ export default function MyPosts() {
     ui.closeLayer();
   };
 
-  const edit = (p?: BlogResponse) => ui.openModal(<PostEditor post={p} onSaved={saved} />, p ? 'Edit post' : 'New post');
+  // The list only carries an excerpt, so fetch the full text before editing.
+  const edit = async (p?: BlogResponse) => {
+    let full = p;
+    if (p) {
+      try { full = await blogApi.get(p.id); } catch (err) { ui.toast(apiErrorMessage(err, 'Could not open the post'), 'alert'); return; }
+    }
+    ui.openModal(<PostEditor post={full} onSaved={saved} />, p ? 'Edit post' : 'New post');
+  };
 
   const remove = async (p: BlogResponse) => {
     const ok = await ui.confirm({ title: `Delete “${p.title}”?`, body: 'The post and its comments will be gone for good.', confirmLabel: 'Delete post', danger: true });
     if (!ok) return;
-    try { await myBlogApi.remove(p.id); setPosts(list => list?.filter(x => x.id !== p.id) ?? null); ui.toast('Post deleted', 'trash'); }
+    try { await blogApi.remove(p.id); setPosts(list => list?.filter(x => x.id !== p.id) ?? null); ui.toast('Post deleted', 'trash'); }
     catch (err) { ui.toast(apiErrorMessage(err, 'Could not delete the post'), 'alert'); }
   };
 
@@ -65,13 +75,13 @@ export default function MyPosts() {
                   <h4>{p.status === 'PUBLISHED'
                     ? <button className="title-btn" onClick={() => ui.openModal(<PostView post={p} />, p.title)}>{p.title}</button>
                     : p.title}</h4>
-                  <p>{excerpt(p.content)}</p>
+                  <p>{excerpt(postBody(p))}</p>
                   {p.status === 'PUBLISHED' && <p className="faint" style={{ fontSize: 12.5, marginTop: 4 }}>{p.likeCount} likes · {p.commentCount} comments</p>}
-                  {p.status === 'REMOVED' && p.deletionReason && <p className="removed-note"><Icon name="alert" size={13} /> Removed by a moderator: {p.deletionReason}</p>}
+                  {p.status === 'HIDDEN' && <p className="removed-note"><Icon name="alert" size={13} /> Removed by a moderator{p.deletionReason ? `: ${p.deletionReason}` : ''}. It can no longer be edited or deleted.</p>}
                 </div>
                 <div className="row">
-                  {p.status !== 'REMOVED' && <button className="btn btn-ghost btn-sm" onClick={() => edit(p)}><Icon name="edit" size={14} /> Edit</button>}
-                  <button className="iconbtn" onClick={() => remove(p)} aria-label={`Delete ${p.title}`}><Icon name="trash" size={17} /></button>
+                  {p.status !== 'HIDDEN' && <button className="btn btn-ghost btn-sm" onClick={() => edit(p)}><Icon name="edit" size={14} /> Edit</button>}
+                  {p.status !== 'HIDDEN' && <button className="iconbtn" onClick={() => remove(p)} aria-label={`Delete ${p.title}`}><Icon name="trash" size={17} /></button>}
                 </div>
               </div>
             );
@@ -84,8 +94,9 @@ export default function MyPosts() {
 
 function PostEditor({ post, onSaved }: { post?: BlogResponse; onSaved: (p: BlogResponse) => void }) {
   const [title, setTitle] = useState(post?.title || '');
-  const [content, setContent] = useState(post?.content || '');
+  const [content, setContent] = useState(post ? postBody(post) : '');
   const [cover, setCover] = useState<File | null>(null);
+  const [dropCover, setDropCover] = useState(false);
   const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -97,18 +108,17 @@ function PostEditor({ post, onSaved }: { post?: BlogResponse; onSaved: (p: BlogR
   }, [cover]);
   const [error, setError] = useState('');
 
-  const save = (status: BlogStatus) => async (e?: FormEvent) => {
+  const save = (status: 'DRAFT' | 'PUBLISHED') => async (e?: FormEvent) => {
     e?.preventDefault();
     if (!title.trim() || !content.trim()) { setError('A post needs a title and a body.'); return; }
     if (title.length > 255) { setError('The title can be at most 255 characters.'); return; }
     setBusy(true); setError('');
     try {
       const body = { title: title.trim(), content: content.trim(), status };
-      let saved = post ? await myBlogApi.update(post.id, body) : await myBlogApi.create(body);
-      if (cover) {
-        const url = await myBlogApi.uploadThumbnail(saved.id, cover);
-        saved = { ...saved, thumbnailUrl: typeof url === 'string' ? url : saved.thumbnailUrl };
-      }
+      // Publishing runs AI moderation and duplicate checks; the error message says what was wrong.
+      let saved = post ? await blogApi.update(post.id, body) : await blogApi.create(body);
+      if (cover) saved = await blogApi.uploadThumbnail(saved.id, cover);
+      else if (dropCover && saved.thumbnailUrl) saved = await blogApi.removeThumbnail(saved.id);
       onSaved(saved);
     } catch (err) {
       setError(apiErrorMessage(err, 'Could not save the post.'));
@@ -131,14 +141,15 @@ function PostEditor({ post, onSaved }: { post?: BlogResponse; onSaved: (p: BlogR
       </div>
       <div className="field">
         <span className="label">Cover image (optional)</span>
-        {(preview || post?.thumbnailUrl) && <img src={preview || post!.thumbnailUrl!} alt="" className="post-thumb" style={{ maxHeight: 160 }} />}
+        {(preview || (post?.thumbnailUrl && !dropCover)) && <img src={preview || post!.thumbnailUrl!} alt="" className="post-thumb" style={{ maxHeight: 160 }} />}
         <div className="filepick">
           <label className="btn btn-ghost btn-sm">
-            <Icon name="upload" size={14} /> {preview || post?.thumbnailUrl ? 'Replace image' : 'Choose an image'}
-            <input type="file" accept="image/*" className="sr-only" onChange={e => setCover(e.target.files?.[0] || null)} />
+            <Icon name="upload" size={14} /> {preview || (post?.thumbnailUrl && !dropCover) ? 'Replace image' : 'Choose an image'}
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={e => { setCover(e.target.files?.[0] || null); setDropCover(false); }} />
           </label>
-          <span className="faint">{cover ? cover.name : 'JPG or PNG, landscape works best'}</span>
+          <span className="faint">{cover ? cover.name : 'JPG, PNG, WEBP or GIF up to 5 MB'}</span>
           {cover && <button type="button" className="linkbtn" onClick={() => setCover(null)}>Remove</button>}
+          {!cover && post?.thumbnailUrl && !dropCover && <button type="button" className="linkbtn" onClick={() => setDropCover(true)}>Remove cover</button>}
         </div>
       </div>
       <div className="form-actions">

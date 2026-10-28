@@ -6,10 +6,10 @@ import { Alert, Avatar, EmptyState, Loading, Spinner } from '../components/commo
 import { useAuth } from '../context/AuthContext';
 import { useLearning } from '../context/LearningContext';
 import { useUI } from '../context/UIContext';
-import { blogApi, myBlogApi } from '../services';
+import { blogApi, notificationApi } from '../services';
 import { apiErrorMessage } from '../api/errors';
-import type { BlogNotificationResponse, BlogResponse, BlogSearchResponse } from '../models';
-import { excerpt, timeAgo } from '../lib/format';
+import type { BlogResponse, BlogSearchResponse, NotificationResponse } from '../models';
+import { excerpt, nameOf, notificationText, postBody, timeAgo } from '../lib/format';
 
 export function CommunityHeader({ tab }: { tab: 'room' | 'mine' }) {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ export default function Community() {
   const [posting, setPosting] = useState(false);
   const [q, setQ] = useState('');
   const [found, setFound] = useState<BlogSearchResponse | null>(null);
-  const [notes, setNotes] = useState<BlogNotificationResponse[]>([]);
+  const [notes, setNotes] = useState<NotificationResponse[]>([]);
   const [unread, setUnread] = useState(0);
 
   const load = useCallback(async (p: number) => {
@@ -57,7 +57,7 @@ export default function Community() {
       const res = await blogApi.published(p, 10);
       setPosts(list => (p === 0 ? res.content : [...(list || []), ...res.content]));
       setPage(p);
-      setLast(res.last ?? res.page + 1 >= res.totalPages);
+      setLast(res.last);
       setError('');
     } catch (err) {
       setPosts(list => list || []);
@@ -67,8 +67,8 @@ export default function Community() {
 
   useEffect(() => { load(0); }, [load]);
   useEffect(() => {
-    blogApi.notifications(0, 6).then(r => setNotes(r.content)).catch(() => {});
-    blogApi.unreadCount().then(setUnread).catch(() => {});
+    notificationApi.list(0, 8).then(r => setNotes(r.content)).catch(() => {});
+    notificationApi.unreadCount().then(setUnread).catch(() => {});
   }, []);
 
   const patch = useCallback((p: BlogResponse) => setPosts(list => list?.map(x => (x.id === p.id ? p : x)) ?? list), []);
@@ -87,7 +87,7 @@ export default function Community() {
     if (!title.trim() || !content.trim()) { ui.toast('Give your post a title and some words first', 'flag'); return; }
     setPosting(true);
     try {
-      const created = await myBlogApi.create({ title: title.trim(), content: content.trim(), status: 'PUBLISHED' });
+      const created = await blogApi.create({ title: title.trim(), content: content.trim(), status: 'PUBLISHED' });
       setPosts(list => [created, ...(list || [])]);
       setTitle(''); setContent('');
       ui.toast('Posted to the common room', 'send');
@@ -103,12 +103,13 @@ export default function Community() {
   };
 
   const markAll = async () => {
-    try { await blogApi.markAllRead(); setUnread(0); setNotes(n => n.map(x => ({ ...x, read: true }))); } catch { /* ignore */ }
+    try { await notificationApi.markAllRead(); setUnread(0); setNotes(n => n.map(x => ({ ...x, read: true }))); } catch { /* ignore */ }
   };
 
-  const openNote = async (n: BlogNotificationResponse) => {
-    if (!n.read) { blogApi.markRead(n.id).catch(() => {}); setUnread(u => Math.max(0, u - 1)); setNotes(list => list.map(x => (x.id === n.id ? { ...x, read: true } : x))); }
+  const openNote = async (n: NotificationResponse) => {
+    if (!n.read) { notificationApi.markRead(n.id).catch(() => {}); setUnread(u => Math.max(0, u - 1)); setNotes(list => list.map(x => (x.id === n.id ? { ...x, read: true } : x))); }
     if (n.blogId) blogApi.get(n.blogId).then(open).catch(() => ui.toast('That post is no longer available', 'alert'));
+    else if (n.type === 'FOLLOW' && n.actor) navigate(`/people/${n.actor.userId}`);
   };
 
   const list = found ? found.blogs.content : posts || [];
@@ -158,8 +159,8 @@ export default function Community() {
               <p className="kicker" style={{ marginBottom: 8 }}>People</p>
               <div className="chip-row">
                 {found.users.content.map(u => (
-                  <span key={u.userId} className="chip static"><Avatar name={u.fullName || u.username} url={u.avatarUrl} size={22} /> {u.fullName || u.username}
-                    <span className="faint">· {u.followerCount} followers</span></span>
+                  <Link key={u.userId} className="chip" to={`/people/${u.userId}`}><Avatar name={nameOf(u)} url={u.avatarUrl} size={22} /> {nameOf(u)}
+                    <span className="faint">· {u.followerCount} followers{u.friend ? ' · friend' : u.followedByMe ? ' · following' : ''}</span></Link>
                 ))}
               </div>
             </div>
@@ -171,9 +172,9 @@ export default function Community() {
                 <button className="feature-post" onClick={() => open(featured)}>
                   <span className="tagchip">Featured · most liked</span>
                   <h3>{featured.title}</h3>
-                  <p>{excerpt(featured.content, 220)}</p>
+                  <p>{excerpt(postBody(featured), 220)}</p>
                   <p className="pmeta" style={{ marginTop: 12 }}>
-                    <b style={{ color: 'var(--ink)' }}>{featured.authorName}</b> · {timeAgo(featured.createdAt)} · {featured.likeCount} likes · {featured.commentCount} comments
+                    <b style={{ color: 'var(--ink)' }}>{nameOf(featured.author)}</b> · {timeAgo(featured.createdAt)} · {featured.likeCount} likes · {featured.commentCount} comments
                   </p>
                 </button>
               )}
@@ -208,10 +209,10 @@ export default function Community() {
             </div>
             {notes.length ? notes.map(n => (
               <button key={n.id} className={`notif ${n.read ? '' : 'unread'}`} onClick={() => openNote(n)}>
-                <b>{n.actorName || 'Someone'}</b> {n.message}
+                <b>{nameOf(n.actor)}</b> {notificationText(n.type)}
                 <span>{n.blogTitle ? `${n.blogTitle} · ` : ''}{timeAgo(n.createdAt)}</span>
               </button>
-            )) : <p className="muted" style={{ fontSize: 13.5, marginTop: 8 }}>Mentions and shares will show up here.</p>}
+            )) : <p className="muted" style={{ fontSize: 13.5, marginTop: 8 }}>Likes, comments, mentions and new followers show up here.</p>}
           </div>
 
           {discussions.length > 0 && (
@@ -219,7 +220,7 @@ export default function Community() {
               <h3 style={{ fontFamily: 'var(--fd)', fontSize: 17 }}>Active discussions</h3>
               {discussions.map(p => (
                 <button key={p.id} className="disc-item" style={{ width: '100%', textAlign: 'left' }} onClick={() => open(p)}>
-                  <b>{p.title}</b><span>{p.authorName} · {p.commentCount} comments</span>
+                  <b>{p.title}</b><span>{nameOf(p.author)} · {p.commentCount} comments</span>
                 </button>
               ))}
             </div>
@@ -247,9 +248,9 @@ function PostRow({ p, onOpen }: { p: BlogResponse; onOpen: () => void }) {
       </span>
       <span style={{ minWidth: 0 }}>
         <h4>{p.title}</h4>
-        <p>{excerpt(p.content)}</p>
+        <p>{excerpt(postBody(p))}</p>
         <span className="pmeta">
-          <span>{p.authorName} · {timeAgo(p.createdAt)}</span>
+          <span>{nameOf(p.author)} · {timeAgo(p.createdAt)}</span>
           <span className="row" style={{ gap: 12 }}>
             <span className={p.likedByMe ? 'liked' : ''}><Icon name="heart" size={13} /> {p.likeCount}</span>
             <span><Icon name="comment" size={13} /> {p.commentCount}</span>

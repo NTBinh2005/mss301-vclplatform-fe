@@ -9,6 +9,8 @@ import type { CategoryResponse, VocabularyResponse } from '../../models';
 import * as v from '../../lib/validation';
 import { PageHead, useLoad } from './shared';
 
+const MAX_VIDEO_MB = 50;
+
 export default function AdminSigns() {
   const ui = useUI();
   const [q, setQ] = useState('');
@@ -23,8 +25,16 @@ export default function AdminSigns() {
     return (data.data?.vocab ?? []).filter(x => (!lq || x.word.toLowerCase().includes(lq)) && (cat === '' || x.categoryId === cat));
   }, [data.data, q, cat]);
 
+  // Several words may share one AI class (one sign, several meanings); show who else uses it.
+  const sharing = useMemo(() => {
+    const by = new Map<number, string[]>();
+    (data.data?.vocab ?? []).forEach(x => { if (x.expectedId != null) by.set(x.expectedId, [...(by.get(x.expectedId) || []), x.word]); });
+    return by;
+  }, [data.data]);
+
   const edit = (sign?: VocabularyResponse, preset?: { word: string; categoryId?: number }) => ui.openModal(
-    <SignForm sign={sign} preset={preset} categories={data.data?.cats ?? []} onSaved={() => { ui.closeLayer(); data.reload(); ui.toast(sign ? 'Sign updated' : 'Sign added'); }} />,
+    <SignForm sign={sign} preset={preset} categories={data.data?.cats ?? []} vocab={data.data?.vocab ?? []}
+      onSaved={msg => { ui.closeLayer(); data.reload(); ui.toast(msg); }} />,
     sign ? 'Edit sign' : 'New sign',
   );
 
@@ -38,7 +48,7 @@ export default function AdminSigns() {
   }, [params, data.data]);
 
   const remove = async (s: VocabularyResponse) => {
-    const ok = await ui.confirm({ title: `Delete “${s.word}”?`, body: 'Learner progress on this sign will be lost.', confirmLabel: 'Delete sign', danger: true });
+    const ok = await ui.confirm({ title: `Delete “${s.word}”?`, body: 'Learner progress on this sign will be lost, and its video and image are deleted.', confirmLabel: 'Delete sign', danger: true });
     if (!ok) return;
     try { await vocabularyApi.remove(s.id); data.reload(); ui.toast('Sign deleted', 'trash'); }
     catch (err) { ui.toast(apiErrorMessage(err, 'Could not delete the sign'), 'alert'); }
@@ -64,19 +74,25 @@ export default function AdminSigns() {
           <table className="table">
             <thead><tr><th></th><th>Sign</th><th>Topic</th><th>Model class</th><th>Video</th><th></th></tr></thead>
             <tbody>
-              {rows.map(s => (
-                <tr key={s.id}>
-                  <td style={{ width: 56 }}>{s.imageUrl ? <img className="thumb" src={s.imageUrl} alt="" /> : <span className="thumb" style={{ display: 'inline-block' }} />}</td>
-                  <td><span className="word">{s.word}</span>{s.description && <div className="faint" style={{ fontSize: 12.5 }}>{s.description}</div>}</td>
-                  <td>{s.categoryName}</td>
-                  <td>{s.expectedId != null ? <span className="pill">#{s.expectedId}</span> : <span className="pill lacquer">not set</span>}</td>
-                  <td>{s.videoTutorialUrl ? <a className="textlink" href={s.videoTutorialUrl} target="_blank" rel="noreferrer"><Icon name="video" size={14} /> open</a> : <span className="faint">—</span>}</td>
-                  <td><div className="actions">
-                    <button className="iconbtn" onClick={() => edit(s)} aria-label={`Edit ${s.word}`}><Icon name="edit" size={17} /></button>
-                    <button className="iconbtn" onClick={() => remove(s)} aria-label={`Delete ${s.word}`}><Icon name="trash" size={17} /></button>
-                  </div></td>
-                </tr>
-              ))}
+              {rows.map(s => {
+                const shared = s.expectedId != null ? (sharing.get(s.expectedId) || []).filter(w => w !== s.word) : [];
+                return (
+                  <tr key={s.id}>
+                    <td style={{ width: 56 }}>{s.imageUrl ? <img className="thumb" src={s.imageUrl} alt="" /> : <span className="thumb" style={{ display: 'inline-block' }} />}</td>
+                    <td><span className="word">{s.word}</span>{s.description && <div className="faint" style={{ fontSize: 12.5 }}>{s.description}</div>}</td>
+                    <td>{s.categoryName}</td>
+                    <td>
+                      {s.expectedId != null ? <span className="pill">#{s.expectedId}</span> : <span className="pill lacquer">not set</span>}
+                      {shared.length > 0 && <div className="faint" style={{ fontSize: 12 }}>same sign as {shared.join(', ')}</div>}
+                    </td>
+                    <td>{s.videoTutorialUrl ? <a className="textlink" href={s.videoTutorialUrl} target="_blank" rel="noreferrer"><Icon name="video" size={14} /> open</a> : <span className="faint">—</span>}</td>
+                    <td><div className="actions">
+                      <button className="iconbtn" onClick={() => edit(s)} aria-label={`Edit ${s.word}`}><Icon name="edit" size={17} /></button>
+                      <button className="iconbtn" onClick={() => remove(s)} aria-label={`Delete ${s.word}`}><Icon name="trash" size={17} /></button>
+                    </div></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -85,8 +101,9 @@ export default function AdminSigns() {
   );
 }
 
-function SignForm({ sign, preset, categories, onSaved }: {
-  sign?: VocabularyResponse; preset?: { word: string; categoryId?: number }; categories: CategoryResponse[]; onSaved: () => void;
+function SignForm({ sign, preset, categories, vocab, onSaved }: {
+  sign?: VocabularyResponse; preset?: { word: string; categoryId?: number }; categories: CategoryResponse[];
+  vocab: VocabularyResponse[]; onSaved: (msg: string) => void;
 }) {
   const presetCat = preset?.categoryId && categories.some(c => c.id === preset.categoryId) ? preset.categoryId : undefined;
   const [f, setF] = useState({
@@ -94,39 +111,50 @@ function SignForm({ sign, preset, categories, onSaved }: {
     categoryId: sign?.categoryId ? String(sign.categoryId) : String(presetCat ?? categories[0]?.id ?? ''),
     description: sign?.description || '',
     expectedId: sign?.expectedId != null ? String(sign.expectedId) : '',
-    videoTutorialUrl: sign?.videoTutorialUrl || '',
-    imageUrl: sign?.imageUrl || '',
   });
+  const [video, setVideo] = useState<File | null>(null);
+  const [image, setImage] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [failure, setFailure] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState('');
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => { setF(p => ({ ...p, [k]: e.target.value })); setErrors(p => ({ ...p, [k]: '' })); };
+
+  const expected = f.expectedId.trim() ? Number(f.expectedId) : null;
+  const sameClass = expected != null ? vocab.filter(x => x.expectedId === expected && x.id !== sign?.id).map(x => x.word) : [];
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const fieldErrors = {
       word: v.text(f.word, 'Word', 255),
       categoryId: f.categoryId ? '' : 'Pick a topic.',
-      expectedId: f.expectedId.trim() ? v.nonNegativeInt(f.expectedId, 'Model class') : '',
+      expectedId: !f.expectedId.trim() ? '' : v.nonNegativeInt(f.expectedId, 'Model class') || (Number(f.expectedId) > 999 ? 'The model has classes 0–999.' : ''),
+      video: video && video.size > MAX_VIDEO_MB * 1024 * 1024 ? `The video can be at most ${MAX_VIDEO_MB} MB.` : '',
     };
     setErrors(fieldErrors);
     if (!v.isValid(fieldErrors)) return;
-    setBusy(true); setFailure('');
+    setFailure('');
     const body = {
       word: f.word.trim(),
       categoryId: Number(f.categoryId),
       description: f.description.trim() || undefined,
-      expectedId: f.expectedId.trim() ? Number(f.expectedId) : undefined,
-      videoTutorialUrl: f.videoTutorialUrl.trim() || undefined,
-      imageUrl: f.imageUrl.trim() || undefined,
+      expectedId: expected ?? undefined,
     };
+    let saved: VocabularyResponse | undefined;
     try {
-      if (sign) await vocabularyApi.update(sign.id, body); else await vocabularyApi.create(body);
-      onSaved();
-    } catch (err) { setFailure(apiErrorMessage(err, 'Could not save the sign.')); setBusy(false); }
+      setBusy('Saving the sign…');
+      saved = sign ? await vocabularyApi.update(sign.id, body) : await vocabularyApi.create(body);
+      if (image) { setBusy('Uploading the image…'); await vocabularyApi.uploadImage(saved.id, image); }
+      // ai-service converts the clip to a web-friendly MP4 first; that takes a while for long clips.
+      if (video) { setBusy('Converting and uploading the video…'); await vocabularyApi.uploadVideo(saved.id, video, expected ?? undefined); }
+      onSaved(sign ? 'Sign updated' : 'Sign added');
+    } catch (err) {
+      const msg = apiErrorMessage(err, 'Could not save the sign.');
+      setFailure(saved ? `The sign was saved, but the media upload failed: ${msg}` : msg);
+      setBusy('');
+    }
   };
 
-  const field = (k: keyof typeof f, label: string, el: ReactNode, hint?: string) => (
+  const field = (k: string, label: string, el: ReactNode, hint?: ReactNode) => (
     <div className={`field ${errors[k] ? 'invalid' : ''}`}>
       <label htmlFor={`sf-${k}`}>{label}</label>
       {el}
@@ -150,10 +178,29 @@ function SignForm({ sign, preset, categories, onSaved }: {
       </div>
       {field('description', 'How to sign it', <input id="sf-description" className="tinput" value={f.description} onChange={set('description')} maxLength={255} placeholder="Flat hand at the chest, palm out, wave twice." />)}
       {field('expectedId', 'AI model class (expectedId)', <input id="sf-expectedId" className="tinput" inputMode="numeric" value={f.expectedId} onChange={set('expectedId')} placeholder="0–999" />,
-        'The class index this sign has in the ONNX model. Without it, learners cannot be scored on this sign.')}
-      {field('videoTutorialUrl', 'Tutorial video URL', <input id="sf-videoTutorialUrl" className="tinput" value={f.videoTutorialUrl} onChange={set('videoTutorialUrl')} maxLength={500} placeholder="https://…/xin-chao.mp4" />)}
-      {field('imageUrl', 'Image URL', <input id="sf-imageUrl" className="tinput" value={f.imageUrl} onChange={set('imageUrl')} maxLength={500} placeholder="https://…" />)}
-      <div className="form-actions"><button className="btn" disabled={busy}>{busy ? <Spinner /> : <Icon name="check" size={15} />} Save</button></div>
+        sameClass.length
+          ? <>Shared with {sameClass.join(', ')} — fine when it is the same sign with several meanings.</>
+          : 'The class index this sign has in the ONNX model. Without it, learners cannot be scored on this sign.')}
+      <div className="form-grid">
+        {field('video', 'Tutorial video', (
+          <div className="filepick">
+            <label className="btn btn-ghost btn-sm"><Icon name="video" size={14} /> {video || sign?.videoTutorialUrl ? 'Replace video' : 'Choose a video'}
+              <input id="sf-video" type="file" accept="video/*" className="sr-only" onChange={e => { setVideo(e.target.files?.[0] || null); setErrors(p => ({ ...p, video: '' })); }} /></label>
+            <span className="faint">{video ? video.name : sign?.videoTutorialUrl ? 'Has a video' : `Up to ${MAX_VIDEO_MB} MB`}</span>
+          </div>
+        ))}
+        {field('image', 'Still image', (
+          <div className="filepick">
+            <label className="btn btn-ghost btn-sm"><Icon name="upload" size={14} /> {image || sign?.imageUrl ? 'Replace image' : 'Choose an image'}
+              <input id="sf-image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={e => setImage(e.target.files?.[0] || null)} /></label>
+            <span className="faint">{image ? image.name : sign?.imageUrl ? 'Has an image' : 'Optional'}</span>
+          </div>
+        ))}
+      </div>
+      {sign?.videoTutorialUrl && !video && <video className="sign-video" src={sign.videoTutorialUrl} controls muted style={{ maxHeight: 180, marginBottom: 12 }} />}
+      <div className="form-actions">
+        <button className="btn" disabled={!!busy}>{busy ? <><Spinner /> {busy}</> : <><Icon name="check" size={15} /> Save</>}</button>
+      </div>
     </form>
   );
 }

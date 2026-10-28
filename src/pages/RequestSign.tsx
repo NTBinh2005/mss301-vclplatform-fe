@@ -67,6 +67,15 @@ export default function RequestSign() {
     } finally { setBusy(false); }
   };
 
+  // Only possible while the team has not reviewed it yet.
+  const withdraw = async (s: VocabularySuggestionResponse) => {
+    try {
+      await suggestionApi.withdraw(s.id);
+      setMine(list => list.filter(x => x.id !== s.id));
+      toast(`Request for “${s.word}” withdrawn`, 'trash');
+    } catch (err) { toast(apiErrorMessage(err, 'Could not withdraw the request'), 'alert'); }
+  };
+
   return (
     <section className="view">
       <Link className="textlink" to="/dictionary"><Icon name="arrowl" size={15} /> Dictionary</Link>
@@ -124,6 +133,9 @@ export default function RequestSign() {
             <div className="timeline-item" key={s.id} style={{ alignItems: 'center' }}>
               <span style={{ minWidth: 0 }}><b className="serif" style={{ fontSize: 16 }}>{s.word}</b><br /><span className="faint" style={{ fontSize: 12.5 }}>{s.categoryName} · {timeAgo(s.createdAt)}</span></span>
               <span className={`pill ${s.status === 'REVIEWED' ? 'ink' : 'dashed'}`} style={{ marginLeft: 'auto' }}>{s.status === 'REVIEWED' ? 'Reviewed' : 'Pending'}</span>
+              {s.status === 'PENDING' && (
+                <button className="iconbtn" onClick={() => withdraw(s)} aria-label={`Withdraw the request for ${s.word}`} title="Withdraw"><Icon name="trash" size={16} /></button>
+              )}
             </div>
           ))}
         </aside>

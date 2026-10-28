@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { GuestOnly, RequireAdmin, RequireLearner } from './components/Shells';
 import Landing from './pages/Landing';
 import NotFound from './pages/NotFound';
@@ -14,6 +14,7 @@ import Studio from './pages/Studio';
 import Community from './pages/Community';
 import MyPosts from './pages/MyPosts';
 import Profile from './pages/Profile';
+import People from './pages/People';
 import AdminOverview from './pages/admin/Overview';
 import AdminCategories from './pages/admin/Categories';
 import AdminSigns from './pages/admin/Signs';
@@ -45,6 +46,8 @@ export default function App() {
         <Route path="/community" element={<Community />} />
         <Route path="/community/mine" element={<MyPosts />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/people/:id" element={<People />} />
+        <Route path="/blogs/:id" element={<SharedPostLink />} />
       </Route>
 
       <Route path="/admin" element={<RequireAdmin />}>
@@ -60,4 +63,10 @@ export default function App() {
       <Route path="*" element={<NotFound standalone />} />
     </Routes>
   );
+}
+
+// Share links from social-service point at /blogs/{id}; the community page opens it.
+function SharedPostLink() {
+  const { id } = useParams();
+  return <Navigate to={`/community?post=${id}`} replace />;
 }

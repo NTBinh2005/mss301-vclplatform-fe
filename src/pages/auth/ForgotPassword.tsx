@@ -103,7 +103,7 @@ export default function ForgotPassword() {
 
       {step === 3 && (
         <form onSubmit={reset} noValidate>
-          <Field label="New password" error={errors.password} hint="8–12 characters, with upper case, lower case and a number.">
+          <Field label="New password" error={errors.password} hint={v.PASSWORD_HINT}>
             <PasswordInput label="New password" value={pw} autoComplete="new-password" onChange={val => { setPw(val); setErrors({}); }} />
           </Field>
           <Field label="Repeat new password" error={errors.confirm}>
