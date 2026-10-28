@@ -34,37 +34,37 @@ export default function ForgotPassword() {
     setErrors({ email: err });
     if (err || busy) return;
     run(async () => { await authApi.forgotPassword(email.trim()); setStep(2); timer.restart(); },
-      'Could not send the code. Check the email address.');
+      'Không gửi được mã. Hãy kiểm tra lại địa chỉ email.');
   };
 
   const verify = (e: FormEvent) => {
     e.preventDefault();
-    if (otp.length !== 6) { setErrors({ otp: 'Enter the 6-digit code.' }); return; }
+    if (otp.length !== 6) { setErrors({ otp: 'Nhập mã 6 chữ số.' }); return; }
     setErrors({});
-    run(async () => { await authApi.verifyOtp(email.trim(), otp); setStep(3); }, 'That code is invalid or has expired.');
+    run(async () => { await authApi.verifyOtp(email.trim(), otp); setStep(3); }, 'Mã không đúng hoặc đã hết hạn.');
   };
 
   const reset = (e: FormEvent) => {
     e.preventDefault();
-    const fieldErrors = { password: v.password(pw), confirm: pw !== pw2 ? 'The two passwords do not match.' : '' };
+    const fieldErrors = { password: v.password(pw), confirm: pw !== pw2 ? 'Hai mật khẩu không khớp.' : '' };
     setErrors(fieldErrors);
     if (!v.isValid(fieldErrors)) return;
     run(async () => {
       await authApi.resetPassword(email.trim(), otp, pw);
-      toast('Password updated. Sign in with your new password.');
+      toast('Đã đặt lại mật khẩu. Hãy đăng nhập bằng mật khẩu mới.');
       navigate('/login', { replace: true });
-    }, 'Could not reset the password. Please try again.');
+    }, 'Không đặt lại được mật khẩu. Vui lòng thử lại.');
   };
 
   const titles = {
-    1: { k: 'Forgot your password?', h: <>Let’s get you <em>back in</em>.</>, l: 'Enter your account email and we will send a 6-digit recovery code.' },
-    2: { k: 'Check your inbox', h: <>Enter the <em>code</em>.</>, l: <>We sent it to <strong>{email}</strong>. Check spam too.</> },
-    3: { k: 'Almost there', h: <>Choose a new <em>password</em>.</>, l: 'Make it one you have not used here before.' },
+    1: { k: 'Quên mật khẩu?', h: <>Cùng lấy lại <em>tài khoản</em>.</>, l: 'Nhập email tài khoản, chúng tôi sẽ gửi mã khôi phục 6 chữ số.' },
+    2: { k: 'Kiểm tra hộp thư', h: <>Nhập <em>mã xác nhận</em>.</>, l: <>Chúng tôi đã gửi tới <strong>{email}</strong>. Nhớ kiểm tra cả thư rác.</> },
+    3: { k: 'Sắp xong rồi', h: <>Chọn <em>mật khẩu</em> mới.</>, l: 'Nên là mật khẩu bạn chưa từng dùng ở đây.' },
   }[step];
 
   return (
-    <AuthLayout quote="“Being stuck is data, not failure.” Recover your account and keep your streak alive.">
-      <div className="steps" aria-label={`Step ${step} of 3`}>
+    <AuthLayout quote="“Bế tắc là dữ liệu, không phải thất bại.” Lấy lại tài khoản và giữ chuỗi ngày học.">
+      <div className="steps" aria-label={`Bước ${step}/3`}>
         {[1, 2, 3].map(n => <span key={n} className={`stepdot ${n < step ? 'done' : n === step ? 'now' : ''}`}>{n < step ? '✓' : n}</span>)}
       </div>
       <p className="kicker">{titles.k}</p>
@@ -75,46 +75,46 @@ export default function ForgotPassword() {
       {step === 1 && (
         <form onSubmit={sendCode} noValidate>
           <Field label="Email" error={errors.email}>
-            <input className="tinput" type="email" autoComplete="email" placeholder="you@email.com" value={email} aria-label="Email"
+            <input className="tinput" type="email" autoComplete="email" placeholder="ban@email.com" value={email} aria-label="Email"
               onChange={e => { setEmail(e.target.value); setErrors({}); setFailure(''); }} />
           </Field>
           <div className="form-actions">
-            <button className="btn btn-lacquer" disabled={busy}>{busy ? <><Spinner /> Sending…</> : <>Send code <Icon name="arrowr" size={16} /></>}</button>
+            <button className="btn btn-lacquer" disabled={busy}>{busy ? <><Spinner /> Đang gửi…</> : <>Gửi mã <Icon name="arrowr" size={16} /></>}</button>
           </div>
         </form>
       )}
 
       {step === 2 && (
         <form onSubmit={verify} noValidate>
-          <Field label="6-digit code" error={errors.otp}>
+          <Field label="Mã 6 chữ số" error={errors.otp}>
             <input className="tinput otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="······" autoFocus
-              value={otp} aria-label="6-digit code" onChange={e => { setOtp(e.target.value.replace(/\D/g, '')); setErrors({}); setFailure(''); }} />
+              value={otp} aria-label="Mã 6 chữ số" onChange={e => { setOtp(e.target.value.replace(/\D/g, '')); setErrors({}); setFailure(''); }} />
           </Field>
           <div className="form-actions">
-            <button className="btn btn-lacquer" disabled={busy || otp.length !== 6}>{busy ? <><Spinner /> Checking…</> : <>Verify <Icon name="check" size={16} /></>}</button>
+            <button className="btn btn-lacquer" disabled={busy || otp.length !== 6}>{busy ? <><Spinner /> Đang kiểm tra…</> : <>Xác minh <Icon name="check" size={16} /></>}</button>
             <span className="spacer" />
             {timer.left > 0
-              ? <span className="faint" style={{ fontSize: 13.5 }}>Resend in {timer.label}</span>
-              : <button type="button" className="linkbtn" disabled={busy} onClick={() => sendCode()}>Resend code</button>}
+              ? <span className="faint" style={{ fontSize: 13.5 }}>Gửi lại sau {timer.label}</span>
+              : <button type="button" className="linkbtn" disabled={busy} onClick={() => sendCode()}>Gửi lại mã</button>}
           </div>
-          <p style={{ marginTop: 16 }}><button type="button" className="textlink" onClick={() => setStep(1)}><Icon name="arrowl" size={14} /> Use another email</button></p>
+          <p style={{ marginTop: 16 }}><button type="button" className="textlink" onClick={() => setStep(1)}><Icon name="arrowl" size={14} /> Dùng email khác</button></p>
         </form>
       )}
 
       {step === 3 && (
         <form onSubmit={reset} noValidate>
-          <Field label="New password" error={errors.password} hint={v.PASSWORD_HINT}>
-            <PasswordInput label="New password" value={pw} autoComplete="new-password" onChange={val => { setPw(val); setErrors({}); }} />
+          <Field label="Mật khẩu mới" error={errors.password} hint={v.PASSWORD_HINT}>
+            <PasswordInput label="Mật khẩu mới" value={pw} autoComplete="new-password" onChange={val => { setPw(val); setErrors({}); }} />
           </Field>
-          <Field label="Repeat new password" error={errors.confirm}>
-            <PasswordInput label="Repeat new password" value={pw2} autoComplete="new-password" onChange={val => { setPw2(val); setErrors({}); }} />
+          <Field label="Nhập lại mật khẩu mới" error={errors.confirm}>
+            <PasswordInput label="Nhập lại mật khẩu mới" value={pw2} autoComplete="new-password" onChange={val => { setPw2(val); setErrors({}); }} />
           </Field>
           <div className="form-actions">
-            <button className="btn btn-lacquer" disabled={busy}>{busy ? <><Spinner /> Saving…</> : <>Update password <Icon name="check" size={16} /></>}</button>
+            <button className="btn btn-lacquer" disabled={busy}>{busy ? <><Spinner /> Đang lưu…</> : <>Cập nhật mật khẩu <Icon name="check" size={16} /></>}</button>
           </div>
         </form>
       )}
-      <p className="auth-foot">Remembered it? <Link className="linkbtn" to="/login">Back to sign in</Link></p>
+      <p className="auth-foot">Nhớ ra rồi? <Link className="linkbtn" to="/login">Quay lại đăng nhập</Link></p>
     </AuthLayout>
   );
 }

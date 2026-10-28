@@ -100,7 +100,7 @@ export function SignPlayer({ frames, size = 200, autoplay = false, chrome = true
       </div>
       {chrome && (
         <div className="sp-bar">
-          <button type="button" className="sp-toggle" aria-label="Play or pause the sign animation" onClick={() => setPlaying(p => !p)}>
+          <button type="button" className="sp-toggle" aria-label="Phát hoặc dừng hoạt ảnh ký hiệu" onClick={() => setPlaying(p => !p)}>
             <Icon name={playing ? 'pause' : 'play'} />
           </button>
           <div className="sp-dots">

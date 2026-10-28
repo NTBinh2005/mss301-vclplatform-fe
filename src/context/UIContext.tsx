@@ -80,15 +80,15 @@ export function UIProvider({ children }: { children: ReactNode }) {
   );
 }
 
-function ConfirmDialog({ title, body, confirmLabel = 'Confirm', danger, onDone }: ConfirmOptions & { onDone: (ok: boolean) => void }) {
+function ConfirmDialog({ title, body, confirmLabel = 'Xác nhận', danger, onDone }: ConfirmOptions & { onDone: (ok: boolean) => void }) {
   return (
     <div className="confirm">
-      <p className="kicker">{danger ? 'Please confirm' : 'Confirm'}</p>
+      <p className="kicker">{danger ? 'Vui lòng xác nhận' : 'Xác nhận'}</p>
       <h2>{title}</h2>
       {body && <p className="muted" style={{ marginTop: 8 }}>{body}</p>}
       <div className="form-actions" style={{ marginTop: 24 }}>
         <button type="button" className={`btn ${danger ? 'btn-danger' : ''}`} onClick={() => onDone(true)} data-autofocus>{confirmLabel}</button>
-        <button type="button" className="btn btn-ghost" onClick={() => onDone(false)}>Cancel</button>
+        <button type="button" className="btn btn-ghost" onClick={() => onDone(false)}>Hủy</button>
       </div>
     </div>
   );
@@ -123,7 +123,7 @@ export function LayerHost({ palette, mentor }: { palette?: ReactNode; mentor?: (
       <div className="veil" onClick={closeLayer} />
       {layer.kind === 'modal' && (
         <div className="modal" role="dialog" aria-modal="true" aria-label={layer.label} tabIndex={-1}>
-          <button type="button" className="iconbtn modal-close" onClick={closeLayer} aria-label="Close"><Icon name="x" /></button>
+          <button type="button" className="iconbtn modal-close" onClick={closeLayer} aria-label="Đóng"><Icon name="x" /></button>
           {layer.node}
         </div>
       )}

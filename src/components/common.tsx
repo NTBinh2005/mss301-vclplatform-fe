@@ -7,7 +7,7 @@ import { initials } from '../lib/format';
 
 export function Brand({ to = '/' }: { to?: string }) {
   return (
-    <Link className="brand" to={to} aria-label="SignMentor home">
+    <Link className="brand" to={to} aria-label="Trang chủ SignMentor">
       <span className="brand-mark"><Hand frame={{ shape: 'open', rot: -16 }} size={19} /></span>
       <span>Sign<em>Mentor</em></span>
     </Link>
@@ -26,7 +26,7 @@ export function SignMedia({ sign, size = 220, autoplay = true }: { sign: Sign; s
     );
   }
   if (sign.imageUrl) {
-    return <div className="media-frame has-video"><img className="sign-img" src={sign.imageUrl} alt={`The sign for ${sign.word}`} /></div>;
+    return <div className="media-frame has-video"><img className="sign-img" src={sign.imageUrl} alt={`Ký hiệu “${sign.word}”`} /></div>;
   }
   return <div className="media-frame"><SignPlayer frames={sign.frames} size={size} autoplay={autoplay} /></div>;
 }
@@ -38,9 +38,9 @@ export function SignThumb({ sign, size = 72 }: { sign: Sign; size?: number }) {
 }
 
 const STATUS: Record<SignStatus, [string, IconName]> = {
-  learned: ['Learned', 'check'],
-  learning: ['Learning', 'refresh'],
-  new: ['New', 'plus'],
+  learned: ['Đã thuộc', 'check'],
+  learning: ['Đang học', 'refresh'],
+  new: ['Mới', 'plus'],
 };
 
 export function StatusTag({ status }: { status: SignStatus }) {
@@ -59,7 +59,7 @@ export function EmptyState({ title, body, action }: { title: string; body: React
   );
 }
 
-export function Loading({ label = 'Loading…' }: { label?: string }) {
+export function Loading({ label = 'Đang tải…' }: { label?: string }) {
   return <div className="loading-block"><span className="spin" /> {label}</div>;
 }
 

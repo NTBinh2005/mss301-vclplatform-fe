@@ -13,10 +13,10 @@ export default function NotFound({ standalone = false }: { standalone?: boolean 
     <section className="view">
       <div className="lockview">
         <span style={{ display: 'inline-block', opacity: 0.25, marginBottom: 12 }}><Hand frame={{ shape: 'flat', rot: -12, arc: 'side' }} size={110} /></span>
-        <p className="kicker">Error 404</p>
-        <h1 className="display sm" style={{ marginTop: 8 }}>This page signed away.</h1>
-        <p className="lede" style={{ margin: '10px auto 24px' }}>The address does not match anything here. It may have moved, or the link was mistyped.</p>
-        <Link className="btn" to={home}><Icon name="arrowl" size={15} /> Back to {status !== 'authed' ? 'the start' : isAdmin ? 'the back office' : 'Today'}</Link>
+        <p className="kicker">Lỗi 404</p>
+        <h1 className="display sm" style={{ marginTop: 8 }}>Trang này đã “ký” đi mất rồi.</h1>
+        <p className="lede" style={{ margin: '10px auto 24px' }}>Địa chỉ này không khớp với trang nào. Có thể trang đã được chuyển đi hoặc đường dẫn bị gõ sai.</p>
+        <Link className="btn" to={home}><Icon name="arrowl" size={15} /> Quay về {status !== 'authed' ? 'trang đầu' : isAdmin ? 'trang quản trị' : 'Hôm nay'}</Link>
       </div>
     </section>
   );

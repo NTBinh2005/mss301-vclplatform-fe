@@ -45,7 +45,7 @@ export function PasswordInput(props: { value: string; onChange: (v: string) => v
     <div className="input-wrap">
       <input className="tinput" type={show ? 'text' : 'password'} value={props.value} placeholder={props.placeholder}
         autoComplete={props.autoComplete} aria-label={props.label} onChange={e => props.onChange(e.target.value)} />
-      <button type="button" className="iconbtn" onClick={() => setShow(s => !s)} aria-label={show ? 'Hide password' : 'Show password'} tabIndex={-1}>
+      <button type="button" className="iconbtn" onClick={() => setShow(s => !s)} aria-label={show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} tabIndex={-1}>
         <Icon name={show ? 'eyeoff' : 'eye'} size={17} />
       </button>
     </div>

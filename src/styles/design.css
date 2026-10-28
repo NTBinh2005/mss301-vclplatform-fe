@@ -9,7 +9,7 @@
   --studio:#181310; --studio-2:#251E18; --studio-line:rgba(246,240,228,.16);
   --r-s:6px; --r-m:12px; --r-l:20px;
   --sh-float:0 18px 44px rgba(34,26,18,.2);
-  --fd:'Fraunces',Georgia,serif; --fb:'Instrument Sans',sans-serif;
+  --fd:'Fraunces',Georgia,serif; --fb:'Be Vietnam Pro',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}

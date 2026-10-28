@@ -35,7 +35,7 @@ export default function AdminSigns() {
   const edit = (sign?: VocabularyResponse, preset?: { word: string; categoryId?: number }) => ui.openModal(
     <SignForm sign={sign} preset={preset} categories={data.data?.cats ?? []} vocab={data.data?.vocab ?? []}
       onSaved={msg => { ui.closeLayer(); data.reload(); ui.toast(msg); }} />,
-    sign ? 'Edit sign' : 'New sign',
+    sign ? 'Sửa ký hiệu' : 'Ký hiệu mới',
   );
 
   // Arriving from a learner request (?new=<word>&cat=<id>) opens a prefilled form once.
@@ -48,31 +48,31 @@ export default function AdminSigns() {
   }, [params, data.data]);
 
   const remove = async (s: VocabularyResponse) => {
-    const ok = await ui.confirm({ title: `Delete “${s.word}”?`, body: 'Learner progress on this sign will be lost, and its video and image are deleted.', confirmLabel: 'Delete sign', danger: true });
+    const ok = await ui.confirm({ title: `Xóa “${s.word}”?`, body: 'Tiến độ học viên với ký hiệu này sẽ mất, video và ảnh cũng bị xóa.', confirmLabel: 'Xóa ký hiệu', danger: true });
     if (!ok) return;
-    try { await vocabularyApi.remove(s.id); data.reload(); ui.toast('Sign deleted', 'trash'); }
-    catch (err) { ui.toast(apiErrorMessage(err, 'Could not delete the sign'), 'alert'); }
+    try { await vocabularyApi.remove(s.id); data.reload(); ui.toast('Đã xóa ký hiệu', 'trash'); }
+    catch (err) { ui.toast(apiErrorMessage(err, 'Không xóa được ký hiệu'), 'alert'); }
   };
 
   return (
     <>
-      <PageHead kicker="Admin · learning-service" title={<>The <em>signs</em></>}>
-        <button className="btn btn-lacquer btn-sm" onClick={() => edit()} disabled={!data.data?.cats.length}><Icon name="plus" size={15} /> New sign</button>
+      <PageHead kicker="Quản trị · learning-service" title={<>Kho <em>ký hiệu</em></>}>
+        <button className="btn btn-lacquer btn-sm" onClick={() => edit()} disabled={!data.data?.cats.length}><Icon name="plus" size={15} /> Ký hiệu mới</button>
       </PageHead>
       <div className="toolbar">
-        <label className="dict-search"><Icon name="search" size={17} /><input placeholder="Search signs…" value={q} onChange={e => setQ(e.target.value)} aria-label="Search signs" /></label>
-        <select className="tselect" style={{ width: 'auto' }} value={cat} onChange={e => setCat(e.target.value ? Number(e.target.value) : '')} aria-label="Filter by topic">
-          <option value="">All topics</option>
+        <label className="dict-search"><Icon name="search" size={17} /><input placeholder="Tìm ký hiệu…" value={q} onChange={e => setQ(e.target.value)} aria-label="Tìm ký hiệu" /></label>
+        <select className="tselect" style={{ width: 'auto' }} value={cat} onChange={e => setCat(e.target.value ? Number(e.target.value) : '')} aria-label="Lọc theo chủ đề">
+          <option value="">Mọi chủ đề</option>
           {data.data?.cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <span className="faint" style={{ fontSize: 13 }}>{rows.length} shown</span>
+        <span className="faint" style={{ fontSize: 13 }}>Hiển thị {rows.length}</span>
       </div>
       {data.loading && !data.data ? <Loading /> : data.error ? <Alert>{data.error}</Alert> : rows.length === 0 ? (
-        <EmptyState title="No signs" body={data.data!.cats.length ? 'Add a sign, or loosen the filters.' : 'Create a topic first.'} />
+        <EmptyState title="Không có ký hiệu" body={data.data!.cats.length ? 'Thêm ký hiệu hoặc nới bộ lọc.' : 'Hãy tạo chủ đề trước.'} />
       ) : (
         <div className="table-wrap">
           <table className="table">
-            <thead><tr><th></th><th>Sign</th><th>Topic</th><th>Model class</th><th>Video</th><th></th></tr></thead>
+            <thead><tr><th></th><th>Ký hiệu</th><th>Chủ đề</th><th>Lớp mô hình</th><th>Video</th><th></th></tr></thead>
             <tbody>
               {rows.map(s => {
                 const shared = s.expectedId != null ? (sharing.get(s.expectedId) || []).filter(w => w !== s.word) : [];
@@ -82,13 +82,13 @@ export default function AdminSigns() {
                     <td><span className="word">{s.word}</span>{s.description && <div className="faint" style={{ fontSize: 12.5 }}>{s.description}</div>}</td>
                     <td>{s.categoryName}</td>
                     <td>
-                      {s.expectedId != null ? <span className="pill">#{s.expectedId}</span> : <span className="pill lacquer">not set</span>}
-                      {shared.length > 0 && <div className="faint" style={{ fontSize: 12 }}>same sign as {shared.join(', ')}</div>}
+                      {s.expectedId != null ? <span className="pill">#{s.expectedId}</span> : <span className="pill lacquer">chưa đặt</span>}
+                      {shared.length > 0 && <div className="faint" style={{ fontSize: 12 }}>cùng ký hiệu với {shared.join(', ')}</div>}
                     </td>
-                    <td>{s.videoTutorialUrl ? <a className="textlink" href={s.videoTutorialUrl} target="_blank" rel="noreferrer"><Icon name="video" size={14} /> open</a> : <span className="faint">—</span>}</td>
+                    <td>{s.videoTutorialUrl ? <a className="textlink" href={s.videoTutorialUrl} target="_blank" rel="noreferrer"><Icon name="video" size={14} /> mở</a> : <span className="faint">—</span>}</td>
                     <td><div className="actions">
-                      <button className="iconbtn" onClick={() => edit(s)} aria-label={`Edit ${s.word}`}><Icon name="edit" size={17} /></button>
-                      <button className="iconbtn" onClick={() => remove(s)} aria-label={`Delete ${s.word}`}><Icon name="trash" size={17} /></button>
+                      <button className="iconbtn" onClick={() => edit(s)} aria-label={`Sửa ${s.word}`}><Icon name="edit" size={17} /></button>
+                      <button className="iconbtn" onClick={() => remove(s)} aria-label={`Xóa ${s.word}`}><Icon name="trash" size={17} /></button>
                     </div></td>
                   </tr>
                 );
@@ -125,10 +125,10 @@ function SignForm({ sign, preset, categories, vocab, onSaved }: {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const fieldErrors = {
-      word: v.text(f.word, 'Word', 255),
-      categoryId: f.categoryId ? '' : 'Pick a topic.',
-      expectedId: !f.expectedId.trim() ? '' : v.nonNegativeInt(f.expectedId, 'Model class') || (Number(f.expectedId) > 999 ? 'The model has classes 0–999.' : ''),
-      video: video && video.size > MAX_VIDEO_MB * 1024 * 1024 ? `The video can be at most ${MAX_VIDEO_MB} MB.` : '',
+      word: v.text(f.word, 'Từ', 255),
+      categoryId: f.categoryId ? '' : 'Chọn chủ đề.',
+      expectedId: !f.expectedId.trim() ? '' : v.nonNegativeInt(f.expectedId, 'Lớp mô hình') || (Number(f.expectedId) > 999 ? 'Mô hình chỉ có các lớp 0–999.' : ''),
+      video: video && video.size > MAX_VIDEO_MB * 1024 * 1024 ? `Video tối đa ${MAX_VIDEO_MB} MB.` : '',
     };
     setErrors(fieldErrors);
     if (!v.isValid(fieldErrors)) return;
@@ -141,15 +141,15 @@ function SignForm({ sign, preset, categories, vocab, onSaved }: {
     };
     let saved: VocabularyResponse | undefined;
     try {
-      setBusy('Saving the sign…');
+      setBusy('Đang lưu ký hiệu…');
       saved = sign ? await vocabularyApi.update(sign.id, body) : await vocabularyApi.create(body);
-      if (image) { setBusy('Uploading the image…'); await vocabularyApi.uploadImage(saved.id, image); }
+      if (image) { setBusy('Đang tải ảnh lên…'); await vocabularyApi.uploadImage(saved.id, image); }
       // ai-service converts the clip to a web-friendly MP4 first; that takes a while for long clips.
-      if (video) { setBusy('Converting and uploading the video…'); await vocabularyApi.uploadVideo(saved.id, video, expected ?? undefined); }
-      onSaved(sign ? 'Sign updated' : 'Sign added');
+      if (video) { setBusy('Đang chuyển mã và tải video lên…'); await vocabularyApi.uploadVideo(saved.id, video, expected ?? undefined); }
+      onSaved(sign ? 'Đã cập nhật ký hiệu' : 'Đã thêm ký hiệu');
     } catch (err) {
-      const msg = apiErrorMessage(err, 'Could not save the sign.');
-      setFailure(saved ? `The sign was saved, but the media upload failed: ${msg}` : msg);
+      const msg = apiErrorMessage(err, 'Không lưu được ký hiệu.');
+      setFailure(saved ? `Đã lưu ký hiệu nhưng tải ảnh/video thất bại: ${msg}` : msg);
       setBusy('');
     }
   };
@@ -164,42 +164,42 @@ function SignForm({ sign, preset, categories, vocab, onSaved }: {
 
   return (
     <form onSubmit={submit} noValidate>
-      <p className="kicker">{sign ? 'Edit sign' : 'New sign'}</p>
-      <h2>{sign ? sign.word : 'Add a sign'}</h2>
-      {preset && !sign && <p className="muted" style={{ marginTop: 4 }}>Requested by a learner — remember to mark the request as reviewed.</p>}
+      <p className="kicker">{sign ? 'Sửa ký hiệu' : 'Ký hiệu mới'}</p>
+      <h2>{sign ? sign.word : 'Thêm ký hiệu'}</h2>
+      {preset && !sign && <p className="muted" style={{ marginTop: 4 }}>Do học viên đề xuất — nhớ đánh dấu đề xuất là đã xem xét.</p>}
       {failure && <div style={{ margin: '12px 0' }}><Alert>{failure}</Alert></div>}
       <div className="form-grid" style={{ marginTop: 18 }}>
-        {field('word', 'Word', <input id="sf-word" className="tinput" value={f.word} onChange={set('word')} placeholder="Xin chào" autoFocus />)}
-        {field('categoryId', 'Topic', (
+        {field('word', 'Từ', <input id="sf-word" className="tinput" value={f.word} onChange={set('word')} placeholder="Xin chào" autoFocus />)}
+        {field('categoryId', 'Chủ đề', (
           <select id="sf-categoryId" className="tselect" value={f.categoryId} onChange={set('categoryId')}>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         ))}
       </div>
-      {field('description', 'How to sign it', <input id="sf-description" className="tinput" value={f.description} onChange={set('description')} maxLength={255} placeholder="Flat hand at the chest, palm out, wave twice." />)}
-      {field('expectedId', 'AI model class (expectedId)', <input id="sf-expectedId" className="tinput" inputMode="numeric" value={f.expectedId} onChange={set('expectedId')} placeholder="0–999" />,
+      {field('description', 'Cách ký', <input id="sf-description" className="tinput" value={f.description} onChange={set('description')} maxLength={255} placeholder="Bàn tay duỗi trước ngực, lòng tay hướng ra, vẫy hai lần." />)}
+      {field('expectedId', 'Lớp mô hình AI (expectedId)', <input id="sf-expectedId" className="tinput" inputMode="numeric" value={f.expectedId} onChange={set('expectedId')} placeholder="0–999" />,
         sameClass.length
-          ? <>Shared with {sameClass.join(', ')} — fine when it is the same sign with several meanings.</>
-          : 'The class index this sign has in the ONNX model. Without it, learners cannot be scored on this sign.')}
+          ? <>Dùng chung với {sameClass.join(', ')} — hợp lệ khi đây là một ký hiệu nhiều nghĩa.</>
+          : 'Chỉ số lớp của ký hiệu trong mô hình ONNX. Không có thì học viên không được chấm điểm ký hiệu này.')}
       <div className="form-grid">
-        {field('video', 'Tutorial video', (
+        {field('video', 'Video hướng dẫn', (
           <div className="filepick">
-            <label className="btn btn-ghost btn-sm"><Icon name="video" size={14} /> {video || sign?.videoTutorialUrl ? 'Replace video' : 'Choose a video'}
+            <label className="btn btn-ghost btn-sm"><Icon name="video" size={14} /> {video || sign?.videoTutorialUrl ? 'Đổi video' : 'Chọn video'}
               <input id="sf-video" type="file" accept="video/*" className="sr-only" onChange={e => { setVideo(e.target.files?.[0] || null); setErrors(p => ({ ...p, video: '' })); }} /></label>
-            <span className="faint">{video ? video.name : sign?.videoTutorialUrl ? 'Has a video' : `Up to ${MAX_VIDEO_MB} MB`}</span>
+            <span className="faint">{video ? video.name : sign?.videoTutorialUrl ? 'Đã có video' : `Tối đa ${MAX_VIDEO_MB} MB`}</span>
           </div>
         ))}
-        {field('image', 'Still image', (
+        {field('image', 'Ảnh minh họa', (
           <div className="filepick">
-            <label className="btn btn-ghost btn-sm"><Icon name="upload" size={14} /> {image || sign?.imageUrl ? 'Replace image' : 'Choose an image'}
+            <label className="btn btn-ghost btn-sm"><Icon name="upload" size={14} /> {image || sign?.imageUrl ? 'Đổi ảnh' : 'Chọn ảnh'}
               <input id="sf-image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={e => setImage(e.target.files?.[0] || null)} /></label>
-            <span className="faint">{image ? image.name : sign?.imageUrl ? 'Has an image' : 'Optional'}</span>
+            <span className="faint">{image ? image.name : sign?.imageUrl ? 'Đã có ảnh' : 'Không bắt buộc'}</span>
           </div>
         ))}
       </div>
       {sign?.videoTutorialUrl && !video && <video className="sign-video" src={sign.videoTutorialUrl} controls muted style={{ maxHeight: 180, marginBottom: 12 }} />}
       <div className="form-actions">
-        <button className="btn" disabled={!!busy}>{busy ? <><Spinner /> {busy}</> : <><Icon name="check" size={15} /> Save</>}</button>
+        <button className="btn" disabled={!!busy}>{busy ? <><Spinner /> {busy}</> : <><Icon name="check" size={15} /> Lưu</>}</button>
       </div>
     </form>
   );

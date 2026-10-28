@@ -52,7 +52,7 @@ export function LearningProvider({ children }: { children: ReactNode }) {
       setAttempts(mine.content);
       setError(null);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not load your lessons.'));
+      setError(apiErrorMessage(err, 'Không tải được bài học của bạn.'));
     }
     try {
       const [s, a] = await Promise.all([practiceApi.stats(), practiceApi.achievements()]);

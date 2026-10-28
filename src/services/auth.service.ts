@@ -33,6 +33,9 @@ export const userApi = {
     unwrap(http.delete<ApiResponse<void>>('/users/me', { data: { password } })),
   uploadAvatar: (image: File) =>
     unwrap(http.post<ApiResponse<UserResponse>>('/users/me/avatar', formData({ image }))),
+  // Use an image already on the web instead of uploading one.
+  setAvatarUrl: (avatarUrl: string) =>
+    unwrap(http.put<ApiResponse<UserResponse>>('/users/me/avatar', { avatarUrl })),
   removeAvatar: () => unwrap(http.delete<ApiResponse<UserResponse>>('/users/me/avatar')),
   setEmailNotifications: (enabled: boolean) =>
     unwrap(http.patch<ApiResponse<UserResponse>>(`/users/me/notifications?${q({ emailNotificationsEnabled: enabled })}`)),

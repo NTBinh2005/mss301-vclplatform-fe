@@ -27,23 +27,23 @@ export default function AdminRequests() {
     try {
       await adminApi.markSuggestionReviewed(s.id);
       list.setData(d => d && ({ ...d, content: d.content.map(x => (x.id === s.id ? { ...x, status: 'REVIEWED' } : x)) }) as PageResponse<Row>);
-      ui.toast(`“${s.word}” marked as reviewed`);
-    } catch (err) { ui.toast(apiErrorMessage(err, 'Could not update the request'), 'alert'); }
+      ui.toast(`Đã đánh dấu “${s.word}” là đã xem xét`);
+    } catch (err) { ui.toast(apiErrorMessage(err, 'Không cập nhật được đề xuất'), 'alert'); }
   };
 
   const pending = list.data?.content.filter(s => s.status === 'PENDING').length ?? 0;
 
   return (
     <>
-      <PageHead kicker="Admin · learner requests" title={<>Sign <em>requests</em></>}>
-        <Link className="btn btn-ghost btn-sm" to="/admin/signs"><Icon name="plus" size={14} /> Add a sign</Link>
+      <PageHead kicker="Quản trị · đề xuất của học viên" title={<>Đề xuất <em>ký hiệu</em></>}>
+        <Link className="btn btn-ghost btn-sm" to="/admin/signs"><Icon name="plus" size={14} /> Thêm ký hiệu</Link>
       </PageHead>
-      <p className="lede" style={{ marginTop: 0 }}>{pending ? `${pending} waiting for review.` : 'Words learners asked the dictionary to include.'}</p>
+      <p className="lede" style={{ marginTop: 0 }}>{pending ? `${pending} đề xuất đang chờ xem xét.` : 'Những từ học viên muốn thêm vào từ điển.'}</p>
       {list.missing ? <Unavailable endpoint="/api/vocabulary-suggestions/admin" service="learning-service" /> : list.loading && !list.data ? <Loading /> : list.error ? <Alert>{list.error}</Alert> : (
-        list.data!.content.length === 0 ? <EmptyState title="No requests yet" body="Learners can request missing signs from the Dictionary." /> : (
+        list.data!.content.length === 0 ? <EmptyState title="Chưa có đề xuất" body="Học viên có thể đề xuất ký hiệu còn thiếu từ trang Từ điển." /> : (
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>Word</th><th>Topic</th><th>Why</th><th>From</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th>Từ</th><th>Chủ đề</th><th>Lý do</th><th>Người đề xuất</th><th>Trạng thái</th><th></th></tr></thead>
               <tbody>
                 {list.data!.content.map(s => (
                   <tr key={s.id}>
@@ -51,11 +51,11 @@ export default function AdminRequests() {
                     <td>{s.categoryName}</td>
                     <td className="muted" style={{ maxWidth: 320 }}>{s.description || '—'}</td>
                     <td className="muted">{s.requesterName}<br /><span className="faint" style={{ fontSize: 12 }}>{timeAgo(s.createdAt)}</span></td>
-                    <td><span className={`pill ${s.status === 'REVIEWED' ? 'ink' : 'dashed'}`}>{s.status === 'REVIEWED' ? 'Reviewed' : 'Pending'}</span></td>
+                    <td><span className={`pill ${s.status === 'REVIEWED' ? 'ink' : 'dashed'}`}>{s.status === 'REVIEWED' ? 'Đã xem xét' : 'Đang chờ'}</span></td>
                     <td><div className="actions">
                       {s.status === 'PENDING' && <>
-                        <Link className="btn btn-ghost btn-sm" to={`/admin/signs?new=${encodeURIComponent(s.word)}${s.categoryId ? `&cat=${s.categoryId}` : ''}`}><Icon name="plus" size={14} /> Add sign</Link>
-                        <button className="btn btn-ghost btn-sm" onClick={() => reviewed(s)}><Icon name="check" size={14} /> Mark reviewed</button>
+                        <Link className="btn btn-ghost btn-sm" to={`/admin/signs?new=${encodeURIComponent(s.word)}${s.categoryId ? `&cat=${s.categoryId}` : ''}`}><Icon name="plus" size={14} /> Thêm ký hiệu</Link>
+                        <button className="btn btn-ghost btn-sm" onClick={() => reviewed(s)}><Icon name="check" size={14} /> Đã xem xét</button>
                       </>}
                     </div></td>
                   </tr>

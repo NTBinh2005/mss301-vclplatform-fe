@@ -22,11 +22,11 @@ type Phase = 'idle' | 'countdown' | 'recording' | 'analyzing' | 'result' | 'fail
 type Cam = 'starting' | 'on' | 'denied' | 'unsupported';
 
 const VERDICT: Record<EvaluationResponse['status'], string> = {
-  CORRECT: 'Signed correctly',
-  ALMOST_CORRECT: 'Almost there',
-  INCORRECT: 'Keep drilling',
+  CORRECT: 'Ký đúng',
+  ALMOST_CORRECT: 'Gần đúng rồi',
+  INCORRECT: 'Luyện thêm nhé',
 };
-const ANALYZE_STEPS = ['Uploading your clip…', 'Reading handshape…', 'Tracing movement path…', 'Comparing with the reference…'];
+const ANALYZE_STEPS = ['Đang tải clip lên…', 'Đang đọc hình dạng tay…', 'Đang dò quỹ đạo chuyển động…', 'Đang so với mẫu…'];
 
 function pickMime(): string | undefined {
   const options = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
@@ -65,7 +65,7 @@ export default function Studio() {
   const [cam, setCam] = useState<Cam>('starting');
   const [phase, setPhase] = useState<Phase>('idle');
   const [count, setCount] = useState(COUNT_FROM);
-  const [label, setLabel] = useState('Mirror view · guide on');
+  const [label, setLabel] = useState('Chế độ gương · có khung hướng dẫn');
   const [result, setResult] = useState<EvaluationResponse | null>(null);
   const [failure, setFailure] = useState('');
   const [typed, setTyped] = useState('');
@@ -205,14 +205,14 @@ export default function Studio() {
         clearTimers();
         setResult(res);
         setPhase('result');
-        setLabel('Mirror view · guide on');
-        if (res.status === 'CORRECT') toast(`“${s.word}” signed correctly`, 'seal');
+        setLabel('Chế độ gương · có khung hướng dẫn');
+        if (res.status === 'CORRECT') toast(`Ký đúng “${s.word}”`, 'seal');
         L.reload();
       } catch (err) {
         clearTimers();
-        setFailure(apiErrorMessage(err, 'The evaluation failed. Please try again.'));
+        setFailure(apiErrorMessage(err, 'Chấm điểm thất bại. Vui lòng thử lại.'));
         setPhase('failed');
-        setLabel('Mirror view · guide on');
+        setLabel('Chế độ gương · có khung hướng dẫn');
       }
     };
     samples.current = [];
@@ -220,7 +220,7 @@ export default function Studio() {
     recording.current = true;
     recorder.start();
     setPhase('recording');
-    setLabel('Recording — sign it now');
+    setLabel('Đang quay — ký ngay bây giờ');
     later(() => recorder.state !== 'inactive' && recorder.stop(), RECORD_MS);
   };
 
@@ -228,7 +228,7 @@ export default function Studio() {
     if (!sign || cam !== 'on' || phase === 'countdown' || phase === 'recording' || phase === 'analyzing') return;
     setResult(null); setFailure(''); setDrawn(false); setHandFb(null);
     setPhase('countdown');
-    setLabel('Get ready…');
+    setLabel('Chuẩn bị…');
     setCount(COUNT_FROM);
     for (let c = COUNT_FROM - 1; c >= 1; c--) later(() => setCount(c), (COUNT_FROM - c) * 800);
     later(() => record(sign), COUNT_FROM * 800);
@@ -246,9 +246,9 @@ export default function Studio() {
   if (!sign) {
     return (
       <section className="view">
-        <EmptyState title="Nothing to practise yet"
-          body="None of the signs are connected to the AI model yet. An administrator needs to set each sign’s model class (expectedId)."
-          action={<Link className="btn btn-sm" to="/dictionary">Browse the dictionary</Link>} />
+        <EmptyState title="Chưa có gì để luyện"
+          body="Chưa ký hiệu nào được nối với mô hình AI. Quản trị viên cần đặt lớp mô hình (expectedId) cho từng ký hiệu."
+          action={<Link className="btn btn-sm" to="/dictionary">Xem từ điển</Link>} />
       </section>
     );
   }
@@ -263,11 +263,11 @@ export default function Studio() {
       <div className="studio">
         <div className="studio-head">
           <div>
-            <p className="kicker">AI practice studio</p>
-            <h1 className="display sm" style={{ color: 'var(--paper)' }}>Rehearse in the <em style={{ color: 'var(--lacquer)' }}>dark room</em>.</h1>
+            <p className="kicker">Phòng tập AI</p>
+            <h1 className="display sm" style={{ color: 'var(--paper)' }}>Tập dượt trong <em style={{ color: 'var(--lacquer)' }}>phòng tối</em>.</h1>
           </div>
           <p style={{ color: 'rgba(246,240,228,.55)', fontSize: 13.5, maxWidth: '36ch' }}>
-            Sign for five seconds after the countdown. Only the clip you record is sent for scoring — the live preview never leaves your device.
+            Ký trong năm giây sau khi đếm ngược. Chỉ đoạn clip bạn quay mới được gửi đi chấm — hình xem trực tiếp không rời khỏi máy bạn.
           </p>
         </div>
 
@@ -281,17 +281,17 @@ export default function Studio() {
                 <div className="cam-ghost" style={{ color: 'var(--paper)' }}><Hand frame={ghostFrame} size={170} ghost /></div>
               )}
               {cam === 'on' && sign.videoUrl && !busy && (
-                <video className="ref-video" src={sign.videoUrl} autoPlay muted loop playsInline aria-label={`Reference video for ${sign.word}`} />
+                <video className="ref-video" src={sign.videoUrl} autoPlay muted loop playsInline aria-label={`Video mẫu của ${sign.word}`} />
               )}
               {cam !== 'on' && (
                 <div className="cam-off">
                   <Hand frame={{ shape: 'flat' }} size={110} ghost />
-                  {cam === 'starting' && <p>Starting the camera…</p>}
+                  {cam === 'starting' && <p>Đang bật camera…</p>}
                   {cam === 'denied' && <>
-                    <p><strong style={{ color: 'var(--paper)' }}>Camera blocked.</strong><br />Allow camera access in your browser to record a practice clip.</p>
-                    <button className="btn cream btn-sm" onClick={startCam}><Icon name="camera" size={15} /> Try again</button>
+                    <p><strong style={{ color: 'var(--paper)' }}>Camera bị chặn.</strong><br />Hãy cho phép trình duyệt dùng camera để quay clip luyện tập.</p>
+                    <button className="btn cream btn-sm" onClick={startCam}><Icon name="camera" size={15} /> Thử lại</button>
                   </>}
-                  {cam === 'unsupported' && <p><strong style={{ color: 'var(--paper)' }}>This browser cannot record video.</strong><br />Try a recent Chrome, Edge or Firefox.</p>}
+                  {cam === 'unsupported' && <p><strong style={{ color: 'var(--paper)' }}>Trình duyệt này không quay được video.</strong><br />Hãy dùng Chrome, Edge hoặc Firefox bản mới.</p>}
                 </div>
               )}
               {phase === 'countdown' && <div className="cam-count" key={count}>{count}</div>}
@@ -308,14 +308,14 @@ export default function Studio() {
               </div>
             </div>
             <p className="stage-caption">
-              Match the ghost: same shape, same path, same pace. Stand back so both arms fit.
-              {cam === 'on' && (pose === 'ready' ? ' The dashed square follows you — that is what gets scored.'
-                : pose === 'loading' ? ' Loading signer tracking…' : ' Signer tracking is off on this device; the centre of the frame is scored.')}
+              Làm theo bàn tay mờ: cùng hình dạng, cùng đường đi, cùng nhịp. Đứng lùi lại để thấy cả hai tay.
+              {cam === 'on' && (pose === 'ready' ? ' Khung vuông nét đứt đi theo bạn — đó là phần được chấm.'
+                : pose === 'loading' ? ' Đang tải bộ theo dõi người ký…' : ' Máy này không chạy được bộ theo dõi người ký; phần giữa khung hình sẽ được chấm.')}
             </p>
           </div>
 
           <div>
-            <p className="kicker">Practising{set.length > 1 ? ` · ${set.findIndex(s => s.id === sign.id) + 1} of ${set.length}` : ''}</p>
+            <p className="kicker">Đang luyện{set.length > 1 ? ` · ${set.findIndex(s => s.id === sign.id) + 1}/${set.length}` : ''}</p>
             <h2 style={{ fontFamily: 'var(--fd)', fontSize: 30, fontWeight: 600 }}>{sign.word}</h2>
             <p className="notation" style={{ color: 'rgba(246,240,228,.6)' }}>{sign.categoryName}{sign.description ? ` · ${sign.description}` : ''}</p>
             <div className="set-row">
@@ -328,29 +328,29 @@ export default function Studio() {
               {(phase === 'idle' || busy) && (
                 <>
                   <p className="studio-intro">
-                    The model watches the whole clip and ranks every sign it knows. You see how <strong style={{ color: 'var(--paper)' }}>confident</strong> it
-                    is that you signed “{sign.word}”, and where your sign <strong style={{ color: 'var(--paper)' }}>ranked</strong> among its guesses.
+                    Mô hình xem cả đoạn clip và xếp hạng mọi ký hiệu nó biết. Bạn sẽ thấy nó <strong style={{ color: 'var(--paper)' }}>tin chắc</strong> đến đâu
+                    rằng bạn đã ký “{sign.word}”, và ký hiệu của bạn <strong style={{ color: 'var(--paper)' }}>xếp hạng</strong> thứ mấy trong các dự đoán.
                   </p>
                   <button className="btn cream" onClick={attempt} disabled={busy || cam !== 'on'}>
-                    {busy ? <><span className="spin" /> {phase === 'analyzing' ? 'Scoring…' : 'Recording…'}</> : <><Icon name="camera" size={17} /> Start attempt</>}
+                    {busy ? <><span className="spin" /> {phase === 'analyzing' ? 'Đang chấm…' : 'Đang quay…'}</> : <><Icon name="camera" size={17} /> Bắt đầu lượt tập</>}
                   </button>
-                  {phase === 'analyzing' && <p className="stage-caption" style={{ textAlign: 'left' }}>The first score after the AI service starts can take up to a minute.</p>}
+                  {phase === 'analyzing' && <p className="stage-caption" style={{ textAlign: 'left' }}>Lần chấm đầu tiên sau khi dịch vụ AI khởi động có thể mất tới một phút.</p>}
                 </>
               )}
 
               {phase === 'failed' && (
                 <>
                   <div className="coachnote" style={{ borderColor: 'var(--lacquer)', marginTop: 0 }}>
-                    <span className="kicker" style={{ color: 'var(--lacquer)' }}>Could not score that one</span>{failure}
+                    <span className="kicker" style={{ color: 'var(--lacquer)' }}>Không chấm được lượt này</span>{failure}
                   </div>
-                  <div className="studio-actions"><button className="btn cream" onClick={attempt}><Icon name="refresh" size={16} /> Try again</button></div>
+                  <div className="studio-actions"><button className="btn cream" onClick={attempt}><Icon name="refresh" size={16} /> Thử lại</button></div>
                 </>
               )}
 
               {phase === 'result' && result && (
                 <>
                   <div className="attempt-row">
-                    <div className="dial" role="img" aria-label={`Confidence ${score} of 100, ${VERDICT[result.status]}`}>
+                    <div className="dial" role="img" aria-label={`Độ tin cậy ${score}/100, ${VERDICT[result.status]}`}>
                       <svg width="120" height="120" viewBox="0 0 120 120">
                         <circle cx="60" cy="60" r="50" fill="none" stroke="var(--studio-line)" strokeWidth="7" />
                         <circle className="dial-arc" cx="60" cy="60" r="50" fill="none" strokeWidth="7" strokeDasharray={C}
@@ -359,21 +359,21 @@ export default function Studio() {
                       <span className="dial-num">{score}</span>
                     </div>
                     <div className="facts">
-                      <div className="fact"><span>Result</span><b>{VERDICT[result.status]}</b></div>
-                      <div className="fact"><span>Confidence</span><b>{result.confidence.toFixed(1)}%</b></div>
-                      <div className="fact"><span>Rank among guesses</span><b>#{result.rank}</b></div>
+                      <div className="fact"><span>Kết quả</span><b>{VERDICT[result.status]}</b></div>
+                      <div className="fact"><span>Độ tin cậy</span><b>{result.confidence.toFixed(1)}%</b></div>
+                      <div className="fact"><span>Hạng trong các dự đoán</span><b>#{result.rank}</b></div>
                     </div>
                   </div>
                   <p style={{ fontFamily: 'var(--fd)', fontStyle: 'italic', fontSize: 19, marginTop: 16 }}>
                     {VERDICT[result.status]} — <span style={{ color: 'rgba(246,240,228,.65)' }}>{sign.word}</span>
                   </p>
-                  <div className="coachnote"><span className="kicker">Mentor notes</span><span>{typed}</span></div>
+                  <div className="coachnote"><span className="kicker">Nhận xét</span><span>{typed}</span></div>
                   <HandNotes feedback={handFb} busy={handBusy} />
                   <div className="studio-actions">
-                    <button className="btn cream" onClick={attempt}><Icon name="refresh" size={16} /> Try again</button>
+                    <button className="btn cream" onClick={attempt}><Icon name="refresh" size={16} /> Thử lại</button>
                     {set.length > 1 && (
                       <button className="btn cream-ghost" onClick={() => choose((idx + 1) % set.length)}>
-                        Next sign <Icon name="arrowr" size={16} />
+                        Ký hiệu tiếp <Icon name="arrowr" size={16} />
                       </button>
                     )}
                   </div>
@@ -382,13 +382,13 @@ export default function Studio() {
             </div>
 
             <div className="session-strip">
-              <span className="kicker">Recent</span>
+              <span className="kicker">Gần đây</span>
               {L.attempts.length ? L.attempts.slice(0, 6).map(a => (
-                <span key={a.attemptId} className={`try-stamp ${a.isCorrect ? 'ok' : ''}`} title={`${a.word} · ${a.isCorrect ? 'correct' : 'not yet'}`}>
+                <span key={a.attemptId} className={`try-stamp ${a.isCorrect ? 'ok' : ''}`} title={`${a.word} · ${a.isCorrect ? 'đúng' : 'chưa đúng'}`}>
                   {a.confidence != null ? Math.round(a.confidence) : a.isCorrect ? '✓' : '·'}
                   <span>{a.word.split(' ')[0].slice(0, 6)}</span>
                 </span>
-              )) : <span style={{ fontSize: 13, color: 'rgba(246,240,228,.5)' }}>No attempts yet — the first one is free.</span>}
+              )) : <span style={{ fontSize: 13, color: 'rgba(246,240,228,.5)' }}>Chưa có lượt tập nào — thử ngay lượt đầu tiên.</span>}
             </div>
           </div>
         </div>
@@ -400,15 +400,15 @@ export default function Studio() {
 /* Hand-shape notes computed in the browser from MediaPipe hand landmarks
    (finger curl/spread, thumb, palm direction), compared with the tutorial video. */
 function HandNotes({ feedback, busy }: { feedback: HandFeedback | null; busy: boolean }) {
-  if (busy) return <div className="hand-fb"><span className="spin" style={{ width: 12, height: 12 }} /> Reading your handshape…</div>;
+  if (busy) return <div className="hand-fb"><span className="spin" style={{ width: 12, height: 12 }} /> Đang đọc hình dạng tay của bạn…</div>;
   if (!feedback) return null;
-  if (!feedback.available) return <div className="hand-fb"><span className="kicker">Handshape</span><p style={{ marginTop: 6 }}>{feedback.note}</p></div>;
+  if (!feedback.available) return <div className="hand-fb"><span className="kicker">Hình dạng tay</span><p style={{ marginTop: 6 }}>{feedback.note}</p></div>;
   return (
     <div className="hand-fb">
-      <span className="kicker">Handshape · from your hand landmarks</span>
+      <span className="kicker">Hình dạng tay · từ tọa độ bàn tay</span>
       <div className="scores">
-        <span><b>{feedback.handShapeScore}%</b> finger shape</span>
-        <span><b>{feedback.palmScore}%</b> palm direction</span>
+        <span><b>{feedback.handShapeScore}%</b> hình dạng ngón</span>
+        <span><b>{feedback.palmScore}%</b> hướng lòng bàn tay</span>
       </div>
       <ul>{feedback.comments.map((c, i) => <li key={i} className={c.severity}>{c.text}</li>)}</ul>
     </div>

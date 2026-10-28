@@ -4,12 +4,13 @@ import { isAxiosError } from 'axios';
 // which wins over the caller's fallback.
 export function apiErrorMessage(err: unknown, fallback: string): string {
   if (!isAxiosError(err)) return err instanceof Error && err.message ? err.message : fallback;
-  if (err.code === 'ECONNABORTED') return 'The server took too long to answer. Please try again.';
-  if (!err.response) return 'Cannot reach the server. Check that the API gateway is running.';
+  if (err.code === 'ECONNABORTED') return 'Máy chủ phản hồi quá lâu. Vui lòng thử lại.';
+  if (!err.response) return 'Không kết nối được máy chủ. Hãy kiểm tra API gateway đã chạy chưa.';
   const data = err.response.data as { message?: string; errors?: { message?: string }[] } | undefined;
   const field = data?.errors?.[0]?.message;
   if (field?.trim()) return field;
-  if (data?.message?.trim()) return data.message;
+  // Bean-validation messages arrive as "field: message"; the field name means nothing to the learner.
+  if (data?.message?.trim()) return data.message.replace(/(^|;\s*)[a-zA-Z.]+: /g, '$1');
   return fallback;
 }
 

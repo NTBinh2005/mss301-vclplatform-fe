@@ -35,7 +35,7 @@ export default function Register() {
       setStep(2);
       timer.restart();
     } catch (err) {
-      setFailure(apiErrorMessage(err, 'Could not send the code. Please try again.'));
+      setFailure(apiErrorMessage(err, 'Không gửi được mã. Vui lòng thử lại.'));
     } finally {
       setBusy(false);
     }
@@ -55,85 +55,85 @@ export default function Register() {
   const submitOtp = async (e: FormEvent) => {
     e.preventDefault();
     if (busy) return;
-    if (otp.length !== 6) { setFailure('The code has 6 digits.'); return; }
+    if (otp.length !== 6) { setFailure('Mã gồm 6 chữ số.'); return; }
     setBusy(true);
     setFailure('');
     try {
       await authApi.register({
         fullName: form.fullName.trim(), username: form.username.trim(), email: form.email.trim(), password: form.password, otp,
       });
-      toast('Account created. Sign in to start learning.');
+      toast('Đã tạo tài khoản. Đăng nhập để bắt đầu học.');
       navigate('/login', { replace: true });
     } catch (err) {
-      setFailure(apiErrorMessage(err, 'Registration failed. Check the code and try again.'));
+      setFailure(apiErrorMessage(err, 'Đăng ký thất bại. Kiểm tra lại mã và thử lại.'));
       setBusy(false);
     }
   };
 
   return (
-    <AuthLayout quote="“Learn five signs a day, use each one in a sentence, and film one attempt. Watch it back. Repeat.”">
-      <div className="steps" aria-label={`Step ${step} of 2`}>
+    <AuthLayout quote="“Mỗi ngày học năm ký hiệu, dùng mỗi ký hiệu trong một câu, quay lại một lần tập. Xem lại. Lặp lại.”">
+      <div className="steps" aria-label={`Bước ${step}/2`}>
         <span className={`stepdot ${step > 1 ? 'done' : 'now'}`}>{step > 1 ? '✓' : 1}</span>
         <span className={`stepdot ${step === 2 ? 'now' : ''}`}>2</span>
       </div>
-      <p className="kicker">{step === 1 ? 'Create your account' : 'Check your inbox'}</p>
-      <h1 className="display sm">{step === 1 ? <>Start your <em>journey</em>.</> : <>Enter the <em>code</em>.</>}</h1>
+      <p className="kicker">{step === 1 ? 'Tạo tài khoản' : 'Kiểm tra hộp thư'}</p>
+      <h1 className="display sm">{step === 1 ? <>Bắt đầu <em>hành trình</em>.</> : <>Nhập <em>mã xác nhận</em>.</>}</h1>
       <p className="lede">
         {step === 1
-          ? 'A few details, then we email you a 6-digit code to confirm it is really you.'
-          : <>We sent a 6-digit code to <strong>{form.email}</strong>. Check spam too.</>}
+          ? 'Điền vài thông tin, rồi chúng tôi gửi mã 6 chữ số qua email để xác nhận đúng là bạn.'
+          : <>Chúng tôi đã gửi mã 6 chữ số tới <strong>{form.email}</strong>. Nhớ kiểm tra cả thư rác.</>}
       </p>
       {failure && <div style={{ marginBottom: 18 }}><Alert>{failure}</Alert></div>}
 
       {step === 1 ? (
         <form onSubmit={submitDetails} noValidate>
           <div className="form-grid">
-            <Field label="Full name" error={errors.fullName}>
-              <input className="tinput" autoComplete="name" placeholder="Nguyễn Minh Anh" value={form.fullName} aria-label="Full name"
+            <Field label="Họ và tên" error={errors.fullName}>
+              <input className="tinput" autoComplete="name" placeholder="Nguyễn Minh Anh" value={form.fullName} aria-label="Họ và tên"
                 onChange={e => set('fullName')(e.target.value)} />
             </Field>
-            <Field label="Username" error={errors.username}>
-              <input className="tinput" autoComplete="username" placeholder="minhanh" value={form.username} aria-label="Username"
+            <Field label="Tên đăng nhập" error={errors.username}>
+              <input className="tinput" autoComplete="username" placeholder="minhanh" value={form.username} aria-label="Tên đăng nhập"
                 onChange={e => set('username')(e.target.value)} />
             </Field>
           </div>
           <Field label="Email" error={errors.email}>
-            <input className="tinput" type="email" autoComplete="email" placeholder="you@email.com" value={form.email} aria-label="Email"
+            <input className="tinput" type="email" autoComplete="email" placeholder="ban@email.com" value={form.email} aria-label="Email"
               onChange={e => set('email')(e.target.value)} />
           </Field>
-          <Field label="Password" error={errors.password} hint={v.PASSWORD_HINT}>
-            <PasswordInput label="Password" value={form.password} autoComplete="new-password" onChange={set('password')} />
+          <Field label="Mật khẩu" error={errors.password} hint={v.PASSWORD_HINT}>
+            <PasswordInput label="Mật khẩu" value={form.password} autoComplete="new-password" onChange={set('password')} />
           </Field>
           <div className="form-actions">
             <button className="btn btn-lacquer" type="submit" disabled={busy}>
-              {busy ? <><Spinner /> Sending code…</> : <>Continue <Icon name="arrowr" size={16} /></>}
+              {busy ? <><Spinner /> Đang gửi mã…</> : <>Tiếp tục <Icon name="arrowr" size={16} /></>}
             </button>
           </div>
         </form>
       ) : (
         <form onSubmit={submitOtp} noValidate>
-          <Field label="6-digit code">
+          <Field label="Mã 6 chữ số">
             <input className="tinput otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="······"
-              value={otp} aria-label="6-digit code" autoFocus
+              value={otp} aria-label="Mã 6 chữ số" autoFocus
               onChange={e => { setOtp(e.target.value.replace(/\D/g, '')); setFailure(''); }} />
           </Field>
           <div className="form-actions">
             <button className="btn btn-lacquer" type="submit" disabled={busy || otp.length < 6}>
-              {busy ? <><Spinner /> Verifying…</> : <>Create account <Icon name="check" size={16} /></>}
+              {busy ? <><Spinner /> Đang xác minh…</> : <>Tạo tài khoản <Icon name="check" size={16} /></>}
             </button>
             <span className="spacer" />
             {timer.left > 0
-              ? <span className="faint" style={{ fontSize: 13.5 }}>Resend in {timer.label}</span>
-              : <button type="button" className="linkbtn" disabled={busy} onClick={sendOtp}>Resend code</button>}
+              ? <span className="faint" style={{ fontSize: 13.5 }}>Gửi lại sau {timer.label}</span>
+              : <button type="button" className="linkbtn" disabled={busy} onClick={sendOtp}>Gửi lại mã</button>}
           </div>
           <p style={{ marginTop: 16 }}>
             <button type="button" className="textlink" onClick={() => { setStep(1); setOtp(''); setFailure(''); }}>
-              <Icon name="arrowl" size={14} /> Edit my details
+              <Icon name="arrowl" size={14} /> Sửa thông tin
             </button>
           </p>
         </form>
       )}
-      <p className="auth-foot">Already have an account? <Link className="linkbtn" to="/login">Sign in</Link></p>
+      <p className="auth-foot">Đã có tài khoản? <Link className="linkbtn" to="/login">Đăng nhập</Link></p>
     </AuthLayout>
   );
 }

@@ -46,7 +46,7 @@ export type Severity = 'good' | 'info' | 'warn';
 export interface HandComment {
   type: 'HAND_COUNT' | 'FINGER' | 'PALM';
   severity: Severity;
-  text: string; // shown to the learner as-is
+  text: string; // tieng Viet co dau, hien truc tiep cho nguoi dung
 }
 
 // Ket qua tra ve cho UI.

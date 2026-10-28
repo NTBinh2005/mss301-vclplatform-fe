@@ -1,14 +1,14 @@
-// Turns the learner's hand-feature sequence + the reference into short coaching notes.
+// Sinh nhan xet tieng Viet tu chuoi dac trung tay cua user + mau tham chieu.
 import { HandFeedback, HandComment, SignReference, HandFeatures } from './types';
 import { compareHand } from './compare';
 import {
   FINGER_ORDER,
-  FINGER_LABELS,
+  FINGER_LABELS_VI,
   FINGER_FLAG_DIFF,
   SPREAD_FLAG,
   THUMB_FLAG,
   PALM_FLAG_DEG,
-  PALM_FACING,
+  PALM_FACING_VI,
 } from './constants';
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -29,8 +29,8 @@ export function buildFeedback(
       severity: 'warn',
       text:
         ref.handCount === 2
-          ? 'This sign uses both hands — only one was in the clip.'
-          : 'This sign uses one hand — both of yours were in the frame.',
+          ? 'Ký hiệu này cần dùng cả hai tay — bạn mới dùng một tay.'
+          : 'Ký hiệu này chỉ dùng một tay — bạn đang đưa hai tay vào khung hình.',
     });
   }
 
@@ -59,7 +59,7 @@ export function buildFeedback(
       comments.push({
         type: 'FINGER',
         severity: 'warn',
-        text: `${cap(label)}: ${shouldStraighten ? 'straighten' : 'bend'} your ${FINGER_LABELS[p.f]} more.`,
+        text: `${cap(label)}: ${FINGER_LABELS_VI[p.f]} nên ${shouldStraighten ? 'duỗi thẳng hơn' : 'co lại hơn'}.`,
       });
     }
 
@@ -69,7 +69,7 @@ export function buildFeedback(
       comments.push({
         type: 'FINGER',
         severity: 'warn',
-        text: `${cap(label)}: ${wider ? 'spread your fingers wider' : 'keep your fingers closer together'}, like the tutorial video.`,
+        text: `${cap(label)}: các ngón nên ${wider ? 'xòe rộng ra hơn' : 'khép lại hơn'} — giống video mẫu.`,
       });
     }
 
@@ -79,7 +79,7 @@ export function buildFeedback(
       comments.push({
         type: 'FINGER',
         severity: 'warn',
-        text: `${cap(label)}: move your thumb ${closer ? 'closer to' : 'further from'} your index finger.`,
+        text: `${cap(label)}: ngón cái nên đưa ${closer ? 'gần ngón trỏ hơn' : 'xa ngón trỏ hơn'}.`,
       });
     }
 
@@ -88,7 +88,7 @@ export function buildFeedback(
       comments.push({
         type: 'PALM',
         severity: 'warn',
-        text: `${cap(label)}: your palm should ${PALM_FACING[diff.refFacing]}, like the tutorial video.`,
+        text: `${cap(label)}: lòng bàn tay nên ${PALM_FACING_VI[diff.refFacing]} — giống video mẫu.`,
       });
     }
   };
@@ -96,14 +96,14 @@ export function buildFeedback(
   if (ref.handCount === 1) {
     const r = ref.right ?? ref.left;
     const u = userRight ?? userLeft;
-    if (u && r) evalPair(u, r, 'hand');
+    if (u && r) evalPair(u, r, 'tay');
   } else {
-    if (userRight && ref.right) evalPair(userRight, ref.right, 'right hand');
-    if (userLeft && ref.left) evalPair(userLeft, ref.left, 'left hand');
+    if (userRight && ref.right) evalPair(userRight, ref.right, 'tay phải');
+    if (userLeft && ref.left) evalPair(userLeft, ref.left, 'tay trái');
   }
 
   if (comments.length === 0) {
-    comments.push({ type: 'FINGER', severity: 'good', text: 'Your handshape matches the tutorial well. Nice work!' });
+    comments.push({ type: 'FINGER', severity: 'good', text: 'Tư thế tay khớp tốt với mẫu. Làm tốt lắm!' });
   }
 
   return {

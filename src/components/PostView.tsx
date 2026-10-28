@@ -40,7 +40,7 @@ export default function PostView({ post: initial, onChange }: { post: BlogRespon
       setLastPage(res.last);
     } catch (err) {
       setComments(list => list || []);
-      setError(apiErrorMessage(err, 'Could not load comments.'));
+      setError(apiErrorMessage(err, 'Không tải được bình luận.'));
     }
   };
 
@@ -54,7 +54,7 @@ export default function PostView({ post: initial, onChange }: { post: BlogRespon
     try {
       const r = post.likedByMe ? await blogApi.unlike(post.id) : await blogApi.like(post.id);
       update({ ...post, likedByMe: r.liked, likeCount: r.likeCount });
-    } catch (err) { ui.toast(apiErrorMessage(err, 'Could not like the post'), 'alert'); }
+    } catch (err) { ui.toast(apiErrorMessage(err, 'Không thích được bài viết'), 'alert'); }
   };
 
   const follow = async () => {
@@ -62,8 +62,8 @@ export default function PostView({ post: initial, onChange }: { post: BlogRespon
     try {
       const r = post.followedAuthor ? await followApi.unfollow(authorId) : await followApi.follow(authorId);
       update({ ...post, followedAuthor: r.followedByMe, friendWithAuthor: r.friend });
-      ui.toast(r.followedByMe ? `Following ${nameOf(post.author)}` : `Unfollowed ${nameOf(post.author)}`, 'users');
-    } catch (err) { ui.toast(apiErrorMessage(err, 'Could not update follow'), 'alert'); }
+      ui.toast(r.followedByMe ? `Đang theo dõi ${nameOf(post.author)}` : `Đã bỏ theo dõi ${nameOf(post.author)}`, 'users');
+    } catch (err) { ui.toast(apiErrorMessage(err, 'Không cập nhật được theo dõi'), 'alert'); }
   };
 
   const addComment = async (e: FormEvent) => {
@@ -76,7 +76,7 @@ export default function PostView({ post: initial, onChange }: { post: BlogRespon
       setComments(list => [...(list || []), c]);
       setText(''); setMention(null);
       update({ ...post, commentCount: post.commentCount + 1 });
-    } catch (err) { ui.toast(apiErrorMessage(err, 'Could not post the comment'), 'alert'); } finally { setBusy(false); }
+    } catch (err) { ui.toast(apiErrorMessage(err, 'Không gửi được bình luận'), 'alert'); } finally { setBusy(false); }
   };
 
   const removeComment = async (c: CommentResponse) => {
@@ -84,8 +84,8 @@ export default function PostView({ post: initial, onChange }: { post: BlogRespon
       await blogApi.deleteComment(c.id);
       setComments(list => (list || []).filter(x => x.id !== c.id));
       update({ ...post, commentCount: Math.max(0, post.commentCount - 1) });
-      ui.toast('Comment deleted', 'trash');
-    } catch (err) { ui.toast(apiErrorMessage(err, 'Could not delete the comment'), 'alert'); }
+      ui.toast('Đã xóa bình luận', 'trash');
+    } catch (err) { ui.toast(apiErrorMessage(err, 'Không xóa được bình luận'), 'alert'); }
   };
 
   const replaceComment = (c: CommentResponse) => setComments(list => (list || []).map(x => (x.id === c.id ? c : x)));
@@ -98,14 +98,14 @@ export default function PostView({ post: initial, onChange }: { post: BlogRespon
         <Avatar name={nameOf(post.author)} url={post.author?.avatarUrl} size={30} />
         <span className="tagchip">
           {authorId != null
-            ? <Link to={`/people/${authorId}`} onClick={closeAnd} className="textlink" style={{ color: 'inherit' }}>{nameOf(post.author, 'Anonymous')}</Link>
-            : 'Anonymous'} · {timeAgo(post.createdAt)}
+            ? <Link to={`/people/${authorId}`} onClick={closeAnd} className="textlink" style={{ color: 'inherit' }}>{nameOf(post.author, 'Ẩn danh')}</Link>
+            : 'Ẩn danh'} · {timeAgo(post.createdAt)}
         </span>
-        {post.status !== 'PUBLISHED' && <span className={`pill ${post.status === 'HIDDEN' ? 'lacquer' : 'dashed'}`}>{post.status === 'HIDDEN' ? 'Removed' : 'Draft'}</span>}
+        {post.status !== 'PUBLISHED' && <span className={`pill ${post.status === 'HIDDEN' ? 'lacquer' : 'dashed'}`}>{post.status === 'HIDDEN' ? 'Bị gỡ' : 'Bản nháp'}</span>}
       </div>
       <h2>{post.title}</h2>
       {post.status === 'HIDDEN' && post.deletionReason && (
-        <p className="removed-note"><Icon name="alert" size={13} /> Removed by a moderator: {post.deletionReason}</p>
+        <p className="removed-note"><Icon name="alert" size={13} /> Bị quản trị viên gỡ: {post.deletionReason}</p>
       )}
       {post.thumbnailUrl && <img className="post-thumb" src={post.thumbnailUrl} alt="" />}
       <div className="post-body">{postBody(post)}</div>
@@ -116,20 +116,20 @@ export default function PostView({ post: initial, onChange }: { post: BlogRespon
             <Icon name="heart" size={15} /> {post.likeCount}
           </button>
           {post.likeCount > 0 && (
-            <button className={`chip ${panel === 'likers' ? 'on' : ''}`} onClick={() => setPanel(p => (p === 'likers' ? 'none' : 'likers'))}>Who liked</button>
+            <button className={`chip ${panel === 'likers' ? 'on' : ''}`} onClick={() => setPanel(p => (p === 'likers' ? 'none' : 'likers'))}>Ai đã thích</button>
           )}
-          <span className="chip static" aria-label={`${post.commentCount} comments`}><Icon name="comment" size={15} /> {post.commentCount}</span>
+          <span className="chip static" aria-label={`${post.commentCount} bình luận`}><Icon name="comment" size={15} /> {post.commentCount}</span>
           <button className={`chip ${panel === 'share' ? 'on' : ''}`} onClick={() => setPanel(p => (p === 'share' ? 'none' : 'share'))}>
-            <Icon name="share" size={15} /> Share{post.shareCount ? ` · ${post.shareCount}` : ''}
+            <Icon name="share" size={15} /> Chia sẻ{post.shareCount ? ` · ${post.shareCount}` : ''}
           </button>
           {!isMine && authorId != null && (
             <button className={`chip ${post.followedAuthor ? 'on' : ''}`} onClick={follow}>
-              <Icon name="users" size={15} /> {post.followedAuthor ? (post.friendWithAuthor ? 'Friends' : 'Following') : 'Follow author'}
+              <Icon name="users" size={15} /> {post.followedAuthor ? (post.friendWithAuthor ? 'Bạn bè' : 'Đang theo dõi') : 'Theo dõi tác giả'}
             </button>
           )}
           {!isMine && (
             <button className={`chip ${panel === 'report' ? 'on' : ''}`} onClick={() => setPanel(p => (p === 'report' ? 'none' : 'report'))}>
-              <Icon name="flag" size={15} /> Report
+              <Icon name="flag" size={15} /> Tố cáo
             </button>
           )}
         </div>
@@ -139,24 +139,24 @@ export default function PostView({ post: initial, onChange }: { post: BlogRespon
       {panel === 'share' && <SharePanel post={post} onShared={n => update({ ...post, shareCount: n })} />}
       {panel === 'likers' && <Likers postId={post.id} onOpenPerson={closeAnd} />}
 
-      <h3 className="serif" style={{ fontSize: 18, fontWeight: 600 }}>Comments</h3>
+      <h3 className="serif" style={{ fontSize: 18, fontWeight: 600 }}>Bình luận</h3>
       {error && <Alert>{error}</Alert>}
-      {comments === null ? <Loading label="Loading comments…" /> : comments.length === 0 && !error
-        ? <p className="muted" style={{ fontSize: 14, padding: '10px 0' }}>No comments yet. Start the conversation.</p>
+      {comments === null ? <Loading label="Đang tải bình luận…" /> : comments.length === 0 && !error
+        ? <p className="muted" style={{ fontSize: 14, padding: '10px 0' }}>Chưa có bình luận. Hãy mở đầu cuộc trò chuyện.</p>
         : comments.map(c => (
           <Comment key={c.id} c={c} myId={user?.userId} canModerate={canModerate}
             onDelete={() => removeComment(c)}
             onChanged={replaceComment} onOpenPerson={closeAnd} />
         ))}
       {comments && !lastPage && (
-        <button className="linkbtn" style={{ margin: '6px 0 12px' }} onClick={() => loadComments(page + 1)}>Show more comments</button>
+        <button className="linkbtn" style={{ margin: '6px 0 12px' }} onClick={() => loadComments(page + 1)}>Xem thêm bình luận</button>
       )}
 
       {post.status === 'PUBLISHED' && (
         <form className="inline-form" onSubmit={addComment}>
-          <MentionInput value={text} mention={mention} label="Add a comment" placeholder="Add a comment… (type @ to mention someone)"
+          <MentionInput value={text} mention={mention} label="Viết bình luận" placeholder="Viết bình luận… (gõ @ để nhắc tên ai đó)"
             onChange={(t, m) => { setText(t); setMention(m); }} />
-          <button className="btn btn-sm" disabled={!text.trim() || busy}>{busy ? <Spinner /> : <Icon name="send" size={14} />} Post</button>
+          <button className="btn btn-sm" disabled={!text.trim() || busy}>{busy ? <Spinner /> : <Icon name="send" size={14} />} Gửi</button>
         </form>
       )}
     </article>
@@ -173,14 +173,14 @@ function ReportForm({ postId, onDone }: { postId: number; onDone: () => void }) 
     setBusy(true);
     try {
       await blogApi.report(postId, reason.trim());
-      toast('Thanks — a moderator will take a look', 'flag');
+      toast('Cảm ơn bạn — quản trị viên sẽ xem xét', 'flag');
       onDone();
-    } catch (err) { toast(apiErrorMessage(err, 'Could not send the report'), 'alert'); setBusy(false); }
+    } catch (err) { toast(apiErrorMessage(err, 'Không gửi được tố cáo'), 'alert'); setBusy(false); }
   };
   return (
     <form className="inline-form" onSubmit={submit} style={{ marginBottom: 16 }}>
-      <input placeholder="What is wrong with this post?" value={reason} onChange={e => setReason(e.target.value)} aria-label="Report reason" maxLength={1000} autoFocus />
-      <button className="btn btn-sm btn-lacquer" disabled={!reason.trim() || busy}>{busy ? <Spinner /> : null} Send report</button>
+      <input placeholder="Bài viết này có vấn đề gì?" value={reason} onChange={e => setReason(e.target.value)} aria-label="Lý do tố cáo" maxLength={1000} autoFocus />
+      <button className="btn btn-sm btn-lacquer" disabled={!reason.trim() || busy}>{busy ? <Spinner /> : null} Gửi tố cáo</button>
     </form>
   );
 }
@@ -199,7 +199,7 @@ function SharePanel({ post, onShared }: { post: BlogResponse; onShared: (count: 
   const run = async (fn: () => Promise<{ shareCount: number }>, msg: string) => {
     setBusy(true);
     try { const r = await fn(); onShared(r.shareCount); toast(msg, 'share'); }
-    catch (err) { toast(apiErrorMessage(err, 'Could not share the post'), 'alert'); }
+    catch (err) { toast(apiErrorMessage(err, 'Không chia sẻ được bài viết'), 'alert'); }
     finally { setBusy(false); }
   };
 
@@ -207,24 +207,24 @@ function SharePanel({ post, onShared }: { post: BlogResponse; onShared: (count: 
     const url = `${window.location.origin}/blogs/${post.id}`;
     try { await navigator.clipboard.writeText(url); } catch { /* the toast still shows the link */ }
     return blogApi.share(post.id, 'COPY_URL');
-  }, 'Link copied');
+  }, 'Đã sao chép liên kết');
 
   return (
     <div className="share-panel">
-      <button className="btn btn-ghost btn-sm" disabled={busy} onClick={copy}><Icon name="share" size={14} /> Copy link</button>
-      <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => run(() => blogApi.share(post.id, 'PROFILE'), 'Shared to your page')}>
-        <Icon name="user" size={14} /> Share to my page
+      <button className="btn btn-ghost btn-sm" disabled={busy} onClick={copy}><Icon name="share" size={14} /> Sao chép liên kết</button>
+      <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => run(() => blogApi.share(post.id, 'PROFILE'), 'Đã chia sẻ lên trang của bạn')}>
+        <Icon name="user" size={14} /> Chia sẻ lên trang của tôi
       </button>
       {friends === null ? <Spinner /> : friends.length > 0 ? (
         <select className="tselect" style={{ width: 'auto' }} disabled={busy} value=""
           onChange={e => {
             const f = friends.find(x => x.userId === Number(e.target.value));
-            if (f) run(() => blogApi.share(post.id, 'PROFILE', f.userId), `Shared to ${nameOf(f)}’s page`);
-          }} aria-label="Share to a friend's page">
-          <option value="">Share to a friend’s page…</option>
+            if (f) run(() => blogApi.share(post.id, 'PROFILE', f.userId), `Đã chia sẻ lên trang của ${nameOf(f)}`);
+          }} aria-label="Chia sẻ lên trang của bạn bè">
+          <option value="">Chia sẻ lên trang bạn bè…</option>
           {friends.map(f => <option key={f.userId} value={f.userId}>{nameOf(f)}</option>)}
         </select>
-      ) : <span className="faint" style={{ fontSize: 13 }}>Follow each other with someone to share to their page.</span>}
+      ) : <span className="faint" style={{ fontSize: 13 }}>Hai người theo dõi nhau mới chia sẻ lên trang của nhau được.</span>}
     </div>
   );
 }
@@ -236,7 +236,7 @@ function Likers({ postId, onOpenPerson }: { postId: number; onOpenPerson: () => 
   return (
     <div className="people-list" style={{ marginBottom: 16 }}>
       {list.map((l, i) => <PersonChip key={l.user?.userId ?? i} u={l.user} onClick={onOpenPerson} meta={timeAgo(l.likedAt)} />)}
-      {list.length === 0 && <span className="faint">No likes yet.</span>}
+      {list.length === 0 && <span className="faint">Chưa có lượt thích.</span>}
     </div>
   );
 }
@@ -264,10 +264,10 @@ function Comment({ c, myId, canModerate, onDelete, onChanged, onOpenPerson }: {
     try {
       const r = c.likedByMe ? await blogApi.unlikeComment(c.id) : await blogApi.likeComment(c.id);
       onChanged({ ...c, likedByMe: r.liked, likeCount: r.likeCount });
-    } catch (err) { toast(apiErrorMessage(err, 'Could not like the comment'), 'alert'); }
+    } catch (err) { toast(apiErrorMessage(err, 'Không thích được bình luận'), 'alert'); }
   };
   const loadReplies = async () => {
-    try { setReplies((await blogApi.replies(c.id)).content); } catch (err) { toast(apiErrorMessage(err, 'Could not load replies'), 'alert'); }
+    try { setReplies((await blogApi.replies(c.id)).content); } catch (err) { toast(apiErrorMessage(err, 'Không tải được trả lời'), 'alert'); }
   };
   // Replying to a reply tags its author, so they are notified too.
   const startReply = (to?: UserBrief | null) => {
@@ -285,30 +285,30 @@ function Comment({ c, myId, canModerate, onDelete, onChanged, onOpenPerson }: {
       setReplies(list => [...(list || []), r]);
       setCount(n => n + 1);
       setText(''); setMention(null); setReplying(false);
-    } catch (err) { toast(apiErrorMessage(err, 'Could not post the reply'), 'alert'); } finally { setBusy(false); }
+    } catch (err) { toast(apiErrorMessage(err, 'Không gửi được trả lời'), 'alert'); } finally { setBusy(false); }
   };
   const replaceReply = (r: ReplyResponse) => setReplies(list => (list || []).map(x => (x.id === r.id ? r : x)));
   const removeReply = async (r: ReplyResponse) => {
-    try { await blogApi.deleteReply(r.id); setReplies(list => (list || []).filter(x => x.id !== r.id)); setCount(n => Math.max(0, n - 1)); toast('Reply deleted', 'trash'); }
-    catch (err) { toast(apiErrorMessage(err, 'Could not delete the reply'), 'alert'); }
+    try { await blogApi.deleteReply(r.id); setReplies(list => (list || []).filter(x => x.id !== r.id)); setCount(n => Math.max(0, n - 1)); toast('Đã xóa trả lời', 'trash'); }
+    catch (err) { toast(apiErrorMessage(err, 'Không xóa được trả lời'), 'alert'); }
   };
 
   return (
     <div className="comment">
       <Avatar name={nameOf(c.user)} url={c.user?.avatarUrl} className="pavatar" />
       <div className="comment-body">
-        <b>{c.user ? <Link to={`/people/${c.user.userId}`} onClick={onOpenPerson} style={{ color: 'inherit' }}>{nameOf(c.user)}</Link> : 'Someone'}</b>
+        <b>{c.user ? <Link to={`/people/${c.user.userId}`} onClick={onOpenPerson} style={{ color: 'inherit' }}>{nameOf(c.user)}</Link> : 'Ai đó'}</b>
         {editing
           ? <EditBox initial={c.content} onCancel={() => setEditing(false)}
               onSave={async content => { const u = await blogApi.updateComment(c.id, content, c.mentionedUser?.userId); onChanged(u); setEditing(false); }} />
           : <p><MentionTag u={c.mentionedUser} content={c.content} />{c.content}</p>}
         <div className="comment-meta">
-          <span>{timeAgo(c.createdAt)}{c.updatedAt && c.updatedAt !== c.createdAt ? ' · edited' : ''}</span>
-          <button className={c.likedByMe ? 'on' : ''} onClick={like}>{c.likeCount ? `${c.likeCount} ` : ''}Like</button>
-          <button onClick={() => (replying ? setReplying(false) : startReply())}>Reply</button>
-          {count > 0 && replies === null && <button onClick={loadReplies}>View {count} {count === 1 ? 'reply' : 'replies'}</button>}
-          {mine && !editing && <button onClick={() => setEditing(true)}>Edit</button>}
-          {(mine || canModerate) && <DeleteButton what="comment and its replies" onConfirm={onDelete} />}
+          <span>{timeAgo(c.createdAt)}{c.updatedAt && c.updatedAt !== c.createdAt ? ' · đã sửa' : ''}</span>
+          <button className={c.likedByMe ? 'on' : ''} onClick={like}>{c.likeCount ? `${c.likeCount} ` : ''}Thích</button>
+          <button onClick={() => (replying ? setReplying(false) : startReply())}>Trả lời</button>
+          {count > 0 && replies === null && <button onClick={loadReplies}>Xem {count} trả lời</button>}
+          {mine && !editing && <button onClick={() => setEditing(true)}>Sửa</button>}
+          {(mine || canModerate) && <DeleteButton what="bình luận này cùng các trả lời" onConfirm={onDelete} />}
         </div>
         {(replies?.length || replying) ? (
           <div className="replies">
@@ -318,9 +318,9 @@ function Comment({ c, myId, canModerate, onDelete, onChanged, onOpenPerson }: {
             ))}
             {replying && (
               <form className="inline-form" onSubmit={reply}>
-                <MentionInput value={text} mention={mention} label="Reply" autoFocus
-                  placeholder={`Reply to ${nameOf(c.user, 'this comment')}…`} onChange={(t, m) => { setText(t); setMention(m); }} />
-                <button className="btn btn-sm" disabled={!text.trim() || busy}>{busy ? <Spinner /> : null} Reply</button>
+                <MentionInput value={text} mention={mention} label="Trả lời" autoFocus
+                  placeholder={`Trả lời ${nameOf(c.user, 'bình luận này')}…`} onChange={(t, m) => { setText(t); setMention(m); }} />
+                <button className="btn btn-sm" disabled={!text.trim() || busy}>{busy ? <Spinner /> : null} Trả lời</button>
               </form>
             )}
           </div>
@@ -341,23 +341,23 @@ function Reply({ r, myId, canModerate, onReply, onChanged, onDelete, onOpenPerso
     try {
       const x = r.likedByMe ? await blogApi.unlikeReply(r.id) : await blogApi.likeReply(r.id);
       onChanged({ ...r, likedByMe: x.liked, likeCount: x.likeCount });
-    } catch (err) { toast(apiErrorMessage(err, 'Could not like the reply'), 'alert'); }
+    } catch (err) { toast(apiErrorMessage(err, 'Không thích được trả lời'), 'alert'); }
   };
   return (
     <div className="comment">
       <Avatar name={nameOf(r.user)} url={r.user?.avatarUrl} className="pavatar" />
       <div className="comment-body">
-        <b>{r.user ? <Link to={`/people/${r.user.userId}`} onClick={onOpenPerson} style={{ color: 'inherit' }}>{nameOf(r.user)}</Link> : 'Someone'}</b>
+        <b>{r.user ? <Link to={`/people/${r.user.userId}`} onClick={onOpenPerson} style={{ color: 'inherit' }}>{nameOf(r.user)}</Link> : 'Ai đó'}</b>
         {editing
           ? <EditBox initial={r.content} onCancel={() => setEditing(false)}
               onSave={async content => { const u = await blogApi.updateReply(r.id, content, r.mentionedUser?.userId); onChanged(u); setEditing(false); }} />
           : <p><MentionTag u={r.mentionedUser} content={r.content} />{r.content}</p>}
         <div className="comment-meta">
-          <span>{timeAgo(r.createdAt)}{r.updatedAt && r.updatedAt !== r.createdAt ? ' · edited' : ''}</span>
-          <button className={r.likedByMe ? 'on' : ''} onClick={like}>{r.likeCount ? `${r.likeCount} ` : ''}Like</button>
-          <button onClick={onReply}>Reply</button>
-          {mine && !editing && <button onClick={() => setEditing(true)}>Edit</button>}
-          {(mine || canModerate) && <DeleteButton what="reply" onConfirm={onDelete} />}
+          <span>{timeAgo(r.createdAt)}{r.updatedAt && r.updatedAt !== r.createdAt ? ' · đã sửa' : ''}</span>
+          <button className={r.likedByMe ? 'on' : ''} onClick={like}>{r.likeCount ? `${r.likeCount} ` : ''}Thích</button>
+          <button onClick={onReply}>Trả lời</button>
+          {mine && !editing && <button onClick={() => setEditing(true)}>Sửa</button>}
+          {(mine || canModerate) && <DeleteButton what="trả lời này" onConfirm={onDelete} />}
         </div>
       </div>
     </div>
@@ -367,12 +367,12 @@ function Reply({ r, myId, canModerate, onReply, onChanged, onDelete, onOpenPerso
 // Confirms in place: the modal layer is already showing the post.
 function DeleteButton({ what, onConfirm }: { what: string; onConfirm: () => void }) {
   const [asking, setAsking] = useState(false);
-  if (!asking) return <button onClick={() => setAsking(true)}>Delete</button>;
+  if (!asking) return <button onClick={() => setAsking(true)}>Xóa</button>;
   return (
     <>
-      <span style={{ color: 'var(--lacquer)' }}>Delete this {what}?</span>
-      <button style={{ color: 'var(--lacquer)' }} onClick={() => { setAsking(false); onConfirm(); }}>Yes, delete</button>
-      <button onClick={() => setAsking(false)}>Keep</button>
+      <span style={{ color: 'var(--lacquer)' }}>Xóa {what}?</span>
+      <button style={{ color: 'var(--lacquer)' }} onClick={() => { setAsking(false); onConfirm(); }}>Xóa</button>
+      <button onClick={() => setAsking(false)}>Giữ lại</button>
     </>
   );
 }
@@ -391,13 +391,13 @@ function EditBox({ initial, onSave, onCancel }: { initial: string; onSave: (cont
     e.preventDefault();
     if (!text.trim() || busy) return;
     setBusy(true);
-    try { await onSave(text.trim()); } catch (err) { toast(apiErrorMessage(err, 'Could not save the change'), 'alert'); setBusy(false); }
+    try { await onSave(text.trim()); } catch (err) { toast(apiErrorMessage(err, 'Không lưu được thay đổi'), 'alert'); setBusy(false); }
   };
   return (
     <form className="inline-form" onSubmit={submit}>
-      <input value={text} onChange={e => setText(e.target.value)} aria-label="Edit" maxLength={2000} autoFocus />
-      <button className="btn btn-sm" disabled={!text.trim() || busy}>{busy ? <Spinner /> : 'Save'}</button>
-      <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>Cancel</button>
+      <input value={text} onChange={e => setText(e.target.value)} aria-label="Sửa" maxLength={2000} autoFocus />
+      <button className="btn btn-sm" disabled={!text.trim() || busy}>{busy ? <Spinner /> : 'Lưu'}</button>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>Hủy</button>
     </form>
   );
 }

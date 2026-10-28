@@ -11,9 +11,9 @@ import { excerpt, postBody, timeAgo } from '../lib/format';
 import { CommunityHeader } from './Community';
 
 const STATUS_PILL: Record<BlogStatus, [string, string]> = {
-  PUBLISHED: ['Published', 'ink'],
-  DRAFT: ['Draft', 'dashed'],
-  HIDDEN: ['Removed', 'lacquer'],
+  PUBLISHED: ['Đã đăng', 'ink'],
+  DRAFT: ['Bản nháp', 'dashed'],
+  HIDDEN: ['Bị gỡ', 'lacquer'],
 };
 
 export default function MyPosts() {
@@ -25,7 +25,7 @@ export default function MyPosts() {
   // As the author, /blogs/user/{me} also returns drafts and posts a moderator removed.
   const load = () => blogApi.byAuthor(user!.userId, 0, 50)
     .then(r => { setPosts(r.content); setError(''); })
-    .catch(err => { setPosts([]); setError(apiErrorMessage(err, 'Could not load your posts.')); });
+    .catch(err => { setPosts([]); setError(apiErrorMessage(err, 'Không tải được bài viết của bạn.')); });
   useEffect(() => { load(); }, []);
 
   const saved = (p: BlogResponse) => {
@@ -37,33 +37,33 @@ export default function MyPosts() {
   const edit = async (p?: BlogResponse) => {
     let full = p;
     if (p) {
-      try { full = await blogApi.get(p.id); } catch (err) { ui.toast(apiErrorMessage(err, 'Could not open the post'), 'alert'); return; }
+      try { full = await blogApi.get(p.id); } catch (err) { ui.toast(apiErrorMessage(err, 'Không mở được bài viết'), 'alert'); return; }
     }
-    ui.openModal(<PostEditor post={full} onSaved={saved} />, p ? 'Edit post' : 'New post');
+    ui.openModal(<PostEditor post={full} onSaved={saved} />, p ? 'Sửa bài viết' : 'Bài viết mới');
   };
 
   const remove = async (p: BlogResponse) => {
-    const ok = await ui.confirm({ title: `Delete “${p.title}”?`, body: 'The post and its comments will be gone for good.', confirmLabel: 'Delete post', danger: true });
+    const ok = await ui.confirm({ title: `Xóa “${p.title}”?`, body: 'Bài viết và các bình luận sẽ bị xóa vĩnh viễn.', confirmLabel: 'Xóa bài', danger: true });
     if (!ok) return;
-    try { await blogApi.remove(p.id); setPosts(list => list?.filter(x => x.id !== p.id) ?? null); ui.toast('Post deleted', 'trash'); }
-    catch (err) { ui.toast(apiErrorMessage(err, 'Could not delete the post'), 'alert'); }
+    try { await blogApi.remove(p.id); setPosts(list => list?.filter(x => x.id !== p.id) ?? null); ui.toast('Đã xóa bài viết', 'trash'); }
+    catch (err) { ui.toast(apiErrorMessage(err, 'Không xóa được bài viết'), 'alert'); }
   };
 
   return (
     <section className="view">
       <CommunityHeader tab="mine" />
       <div className="toolbar">
-        <button className="btn btn-lacquer btn-sm" onClick={() => edit()}><Icon name="plus" size={15} /> New post</button>
+        <button className="btn btn-lacquer btn-sm" onClick={() => edit()}><Icon name="plus" size={15} /> Bài viết mới</button>
         {posts && posts.length > 0 && (
           <span className="faint" style={{ fontSize: 13 }}>
-            {posts.filter(p => p.status === 'PUBLISHED').length} published · {posts.filter(p => p.status === 'DRAFT').length} drafts
+            {posts.filter(p => p.status === 'PUBLISHED').length} đã đăng · {posts.filter(p => p.status === 'DRAFT').length} bản nháp
           </span>
         )}
       </div>
       {error && <Alert>{error}</Alert>}
       {posts === null ? <Loading /> : posts.length === 0 && !error ? (
-        <EmptyState title="You have not written anything yet" body="Share a practice tip, a milestone, or a question for people one chapter ahead."
-          action={<button className="btn btn-sm" onClick={() => edit()}>Write your first post</button>} />
+        <EmptyState title="Bạn chưa viết gì" body="Chia sẻ một mẹo luyện tập, một cột mốc, hoặc một câu hỏi cho những người đi trước."
+          action={<button className="btn btn-sm" onClick={() => edit()}>Viết bài đầu tiên</button>} />
       ) : (
         <div style={{ borderTop: '1px solid var(--line-2)', marginTop: 8 }}>
           {posts.map(p => {
@@ -71,17 +71,17 @@ export default function MyPosts() {
             return (
               <div className="mypost" key={p.id}>
                 <div style={{ minWidth: 0 }}>
-                  <div className="row" style={{ marginBottom: 4 }}><span className={`pill ${cls}`}>{label}</span><span className="faint" style={{ fontSize: 12.5 }}>Updated {timeAgo(p.updatedAt || p.createdAt)}</span></div>
+                  <div className="row" style={{ marginBottom: 4 }}><span className={`pill ${cls}`}>{label}</span><span className="faint" style={{ fontSize: 12.5 }}>Cập nhật {timeAgo(p.updatedAt || p.createdAt)}</span></div>
                   <h4>{p.status === 'PUBLISHED'
                     ? <button className="title-btn" onClick={() => ui.openModal(<PostView post={p} />, p.title)}>{p.title}</button>
                     : p.title}</h4>
                   <p>{excerpt(postBody(p))}</p>
-                  {p.status === 'PUBLISHED' && <p className="faint" style={{ fontSize: 12.5, marginTop: 4 }}>{p.likeCount} likes · {p.commentCount} comments</p>}
-                  {p.status === 'HIDDEN' && <p className="removed-note"><Icon name="alert" size={13} /> Removed by a moderator{p.deletionReason ? `: ${p.deletionReason}` : ''}. It can no longer be edited or deleted.</p>}
+                  {p.status === 'PUBLISHED' && <p className="faint" style={{ fontSize: 12.5, marginTop: 4 }}>{p.likeCount} lượt thích · {p.commentCount} bình luận</p>}
+                  {p.status === 'HIDDEN' && <p className="removed-note"><Icon name="alert" size={13} /> Bị quản trị viên gỡ{p.deletionReason ? `: ${p.deletionReason}` : ''}. Bài không thể sửa hay xóa nữa.</p>}
                 </div>
                 <div className="row">
-                  {p.status !== 'HIDDEN' && <button className="btn btn-ghost btn-sm" onClick={() => edit(p)}><Icon name="edit" size={14} /> Edit</button>}
-                  {p.status !== 'HIDDEN' && <button className="iconbtn" onClick={() => remove(p)} aria-label={`Delete ${p.title}`}><Icon name="trash" size={17} /></button>}
+                  {p.status !== 'HIDDEN' && <button className="btn btn-ghost btn-sm" onClick={() => edit(p)}><Icon name="edit" size={14} /> Sửa</button>}
+                  {p.status !== 'HIDDEN' && <button className="iconbtn" onClick={() => remove(p)} aria-label={`Xóa ${p.title}`}><Icon name="trash" size={17} /></button>}
                 </div>
               </div>
             );
@@ -110,8 +110,8 @@ function PostEditor({ post, onSaved }: { post?: BlogResponse; onSaved: (p: BlogR
 
   const save = (status: 'DRAFT' | 'PUBLISHED') => async (e?: FormEvent) => {
     e?.preventDefault();
-    if (!title.trim() || !content.trim()) { setError('A post needs a title and a body.'); return; }
-    if (title.length > 255) { setError('The title can be at most 255 characters.'); return; }
+    if (!title.trim() || !content.trim()) { setError('Bài viết cần có tiêu đề và nội dung.'); return; }
+    if (title.length > 255) { setError('Tiêu đề tối đa 255 ký tự.'); return; }
     setBusy(true); setError('');
     try {
       const body = { title: title.trim(), content: content.trim(), status };
@@ -121,40 +121,40 @@ function PostEditor({ post, onSaved }: { post?: BlogResponse; onSaved: (p: BlogR
       else if (dropCover && saved.thumbnailUrl) saved = await blogApi.removeThumbnail(saved.id);
       onSaved(saved);
     } catch (err) {
-      setError(apiErrorMessage(err, 'Could not save the post.'));
+      setError(apiErrorMessage(err, 'Không lưu được bài viết.'));
       setBusy(false);
     }
   };
 
   return (
     <form onSubmit={save('PUBLISHED')}>
-      <p className="kicker">{post ? 'Edit post' : 'New post'}</p>
-      <h2>{post ? 'Polish it' : 'Write for the common room'}</h2>
+      <p className="kicker">{post ? 'Sửa bài viết' : 'Bài viết mới'}</p>
+      <h2>{post ? 'Chỉnh sửa' : 'Viết cho cộng đồng'}</h2>
       {error && <div style={{ margin: '12px 0' }}><Alert>{error}</Alert></div>}
       <div className="field" style={{ marginTop: 18 }}>
-        <label htmlFor="pe-title">Title</label>
-        <input id="pe-title" className="tinput" value={title} onChange={e => setTitle(e.target.value)} placeholder="How I finally got “Cảm ơn” right" autoFocus />
+        <label htmlFor="pe-title">Tiêu đề</label>
+        <input id="pe-title" className="tinput" value={title} onChange={e => setTitle(e.target.value)} placeholder="Cuối cùng mình đã ký đúng “Cảm ơn”" autoFocus />
       </div>
       <div className="field">
-        <label htmlFor="pe-body">Body</label>
+        <label htmlFor="pe-body">Nội dung</label>
         <textarea id="pe-body" className="tarea" style={{ minHeight: 200 }} value={content} onChange={e => setContent(e.target.value)} />
       </div>
       <div className="field">
-        <span className="label">Cover image (optional)</span>
+        <span className="label">Ảnh bìa (không bắt buộc)</span>
         {(preview || (post?.thumbnailUrl && !dropCover)) && <img src={preview || post!.thumbnailUrl!} alt="" className="post-thumb" style={{ maxHeight: 160 }} />}
         <div className="filepick">
           <label className="btn btn-ghost btn-sm">
-            <Icon name="upload" size={14} /> {preview || (post?.thumbnailUrl && !dropCover) ? 'Replace image' : 'Choose an image'}
+            <Icon name="upload" size={14} /> {preview || (post?.thumbnailUrl && !dropCover) ? 'Đổi ảnh' : 'Chọn ảnh'}
             <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="sr-only" onChange={e => { setCover(e.target.files?.[0] || null); setDropCover(false); }} />
           </label>
-          <span className="faint">{cover ? cover.name : 'JPG, PNG, WEBP or GIF up to 5 MB'}</span>
-          {cover && <button type="button" className="linkbtn" onClick={() => setCover(null)}>Remove</button>}
-          {!cover && post?.thumbnailUrl && !dropCover && <button type="button" className="linkbtn" onClick={() => setDropCover(true)}>Remove cover</button>}
+          <span className="faint">{cover ? cover.name : 'JPG, PNG, WEBP hoặc GIF, tối đa 5 MB'}</span>
+          {cover && <button type="button" className="linkbtn" onClick={() => setCover(null)}>Bỏ chọn</button>}
+          {!cover && post?.thumbnailUrl && !dropCover && <button type="button" className="linkbtn" onClick={() => setDropCover(true)}>Gỡ ảnh bìa</button>}
         </div>
       </div>
       <div className="form-actions">
-        <button className="btn btn-lacquer" disabled={busy}>{busy ? <Spinner /> : <Icon name="send" size={15} />} Publish</button>
-        <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => save('DRAFT')()}>Save as draft</button>
+        <button className="btn btn-lacquer" disabled={busy}>{busy ? <Spinner /> : <Icon name="send" size={15} />} Đăng bài</button>
+        <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => save('DRAFT')()}>Lưu nháp</button>
       </div>
     </form>
   );

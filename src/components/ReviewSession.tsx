@@ -29,17 +29,17 @@ export default function ReviewSession({ queue }: { queue: Sign[] }) {
   if (!sign) {
     return (
       <>
-        <p className="kicker">Review complete</p>
-        <h2>{ok} of {queue.length} recalled with confidence.</h2>
+        <p className="kicker">Ôn tập xong</p>
+        <h2>Nhớ chắc {ok}/{queue.length} ký hiệu.</h2>
         <p style={{ color: 'var(--ink-2)', margin: '10px 0 20px' }}>
           {ok === queue.length
-            ? 'A clean sweep. To lock them in for good, sign them once for the Studio.'
-            : 'The ones you hesitated on stay in the queue. They will come back.'}
+            ? 'Trọn vẹn! Để ghi nhớ hẳn, hãy ký mỗi ký hiệu một lần trong Phòng tập.'
+            : 'Những ký hiệu bạn còn lưỡng lự vẫn ở trong hàng đợi và sẽ quay lại.'}
         </p>
         <div className="row">
-          <button className="btn" onClick={closeLayer}>Back to learning</button>
+          <button className="btn" onClick={closeLayer}>Quay lại học</button>
           <button className="btn btn-ghost" onClick={() => { closeLayer(); navigate('/studio'); }}>
-            <Icon name="video" size={15} /> Open the Studio
+            <Icon name="video" size={15} /> Mở Phòng tập
           </button>
         </div>
       </>
@@ -48,18 +48,18 @@ export default function ReviewSession({ queue }: { queue: Sign[] }) {
 
   return (
     <>
-      <p className="kicker">Flashcard {i + 1} of {queue.length} · from your review queue</p>
-      <h2>What does this sign say?</h2>
+      <p className="kicker">Thẻ {i + 1}/{queue.length} · từ hàng đợi ôn tập</p>
+      <h2>Ký hiệu này nói gì?</h2>
       <div style={{ margin: '16px 0' }}><SignMedia sign={sign} size={160} /></div>
       {!revealed ? (
-        <button className="btn" onClick={() => setRevealed(true)} data-autofocus><Icon name="seal" size={16} /> Reveal meaning</button>
+        <button className="btn" onClick={() => setRevealed(true)} data-autofocus><Icon name="seal" size={16} /> Xem nghĩa</button>
       ) : (
         <div>
           <p style={{ fontFamily: 'var(--fd)', fontSize: 26, fontWeight: 600 }}>{sign.word}</p>
           <p className="notation" style={{ margin: '4px 0 18px' }}>{sign.categoryName}{sign.description ? ` · ${sign.description}` : ''}</p>
           <div className="row">
-            <button className="btn btn-ghost" onClick={() => answer(false)}><Icon name="refresh" size={15} /> Again — I hesitated</button>
-            <button className="btn btn-lacquer" onClick={() => answer(true)}><Icon name="check" size={16} /> I signed it in my head</button>
+            <button className="btn btn-ghost" onClick={() => answer(false)}><Icon name="refresh" size={15} /> Ôn lại — mình còn lưỡng lự</button>
+            <button className="btn btn-lacquer" onClick={() => answer(true)}><Icon name="check" size={16} /> Mình đã nhớ ra</button>
           </div>
         </div>
       )}

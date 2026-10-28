@@ -11,7 +11,7 @@ import type { BlogResponse, FollowStatusResponse, SharedBlogResponse, SocialUser
 import { excerpt, nameOf, postBody, timeAgo } from '../lib/format';
 
 type Tab = 'posts' | 'shared' | 'followers' | 'following' | 'friends';
-const TABS: [Tab, string][] = [['posts', 'Posts'], ['shared', 'Shared'], ['followers', 'Followers'], ['following', 'Following'], ['friends', 'Friends']];
+const TABS: [Tab, string][] = [['posts', 'Bài viết'], ['shared', 'Được chia sẻ'], ['followers', 'Người theo dõi'], ['following', 'Đang theo dõi'], ['friends', 'Bạn bè']];
 
 /* Someone's public page: who they are, their published posts, posts shared onto
    their page, and their followers / following / friends. */
@@ -28,8 +28,8 @@ export default function People() {
 
   useEffect(() => {
     setPerson(null); setRel(null); setError(''); setTab('posts');
-    if (!userId) { setError('No such person.'); return; }
-    userApi.get(userId).then(setPerson).catch(err => setError(apiErrorMessage(err, 'Could not find this person.')));
+    if (!userId) { setError('Không có người dùng này.'); return; }
+    userApi.get(userId).then(setPerson).catch(err => setError(apiErrorMessage(err, 'Không tìm thấy người dùng này.')));
     followApi.stats(userId).then(setRel).catch(() => {});
   }, [userId]);
 
@@ -37,7 +37,7 @@ export default function People() {
     if (!rel) return;
     try {
       setRel(rel.followedByMe ? await followApi.unfollow(userId) : await followApi.follow(userId));
-    } catch (err) { ui.toast(apiErrorMessage(err, 'Could not update follow'), 'alert'); }
+    } catch (err) { ui.toast(apiErrorMessage(err, 'Không cập nhật được theo dõi'), 'alert'); }
   };
 
   if (error) return <section className="view"><Alert>{error}</Alert></section>;
@@ -46,24 +46,24 @@ export default function People() {
 
   return (
     <section className="view">
-      <Link className="textlink" to="/community"><Icon name="arrowl" size={15} /> Community</Link>
+      <Link className="textlink" to="/community"><Icon name="arrowl" size={15} /> Cộng đồng</Link>
       <div className="row" style={{ gap: 18, marginTop: 18, alignItems: 'center', flexWrap: 'wrap' }}>
         <Avatar name={name} url={person.avatarUrl} size={72} />
         <div style={{ minWidth: 0 }}>
-          <p className="kicker">@{person.username}{rel?.followsMe && !isMe ? ' · follows you' : ''}</p>
+          <p className="kicker">@{person.username}{rel?.followsMe && !isMe ? ' · đang theo dõi bạn' : ''}</p>
           <h1 className="display sm">{name}</h1>
           {rel && (
             <p className="faint" style={{ fontSize: 13.5 }}>
-              {rel.followerCount} followers · {rel.followingCount} following · {rel.friendCount} friends
+              {rel.followerCount} người theo dõi · đang theo dõi {rel.followingCount} · {rel.friendCount} bạn bè
             </p>
           )}
         </div>
         <span className="spacer" />
         {isMe
-          ? <Link className="btn btn-ghost btn-sm" to="/profile"><Icon name="edit" size={14} /> Edit profile</Link>
+          ? <Link className="btn btn-ghost btn-sm" to="/profile"><Icon name="edit" size={14} /> Sửa hồ sơ</Link>
           : rel && (
             <button className={`btn btn-sm ${rel.followedByMe ? 'btn-ghost' : ''}`} onClick={toggleFollow}>
-              <Icon name="users" size={14} /> {rel.followedByMe ? (rel.friend ? 'Friends · unfollow' : 'Following · unfollow') : rel.followsMe ? 'Follow back' : 'Follow'}
+              <Icon name="users" size={14} /> {rel.followedByMe ? (rel.friend ? 'Bạn bè · bỏ theo dõi' : 'Đang theo dõi · bỏ theo dõi') : rel.followsMe ? 'Theo dõi lại' : 'Theo dõi'}
             </button>
           )}
       </div>
@@ -93,7 +93,7 @@ function usePaged<T>(load: (page: number) => Promise<{ content: T[]; last: boole
       const r = await load(p);
       setItems(list => (p === 0 ? r.content : [...(list || []), ...r.content]));
       setPage(p); setLast(r.last); setError('');
-    } catch (err) { setItems(list => list || []); setError(apiErrorMessage(err, 'Could not load this list.')); }
+    } catch (err) { setItems(list => list || []); setError(apiErrorMessage(err, 'Không tải được danh sách này.')); }
   }, [load]);
   useEffect(() => { setItems(null); fetchPage(0); }, [fetchPage]);
   return { items, error, last, more: () => fetchPage(page + 1), setItems };
@@ -110,18 +110,18 @@ function PostsTab({ userId }: { userId: number }) {
   return (
     <>
       {error && <Alert>{error}</Alert>}
-      {visible.length === 0 && !error && <EmptyState title="No posts yet" body="Published posts show up here." />}
+      {visible.length === 0 && !error && <EmptyState title="Chưa có bài viết" body="Bài đã đăng sẽ hiện ở đây." />}
       {visible.map(p => (
         <button key={p.id} className="post" onClick={() => ui.openModal(<PostView post={p} onChange={patch} />, p.title)}>
           <span className="pthumb" aria-hidden="true">{p.thumbnailUrl ? <img src={p.thumbnailUrl} alt="" /> : <Icon name="book" size={28} />}</span>
           <span style={{ minWidth: 0 }}>
             <h4>{p.title}</h4>
             <p>{excerpt(postBody(p))}</p>
-            <span className="pmeta"><span>{timeAgo(p.createdAt)}</span><span>{p.likeCount} likes · {p.commentCount} comments</span></span>
+            <span className="pmeta"><span>{timeAgo(p.createdAt)}</span><span>{p.likeCount} lượt thích · {p.commentCount} bình luận</span></span>
           </span>
         </button>
       ))}
-      {!last && <div style={{ textAlign: 'center', marginTop: 16 }}><button className="btn btn-ghost btn-sm" onClick={more}>Load more</button></div>}
+      {!last && <div style={{ textAlign: 'center', marginTop: 16 }}><button className="btn btn-ghost btn-sm" onClick={more}>Xem thêm</button></div>}
     </>
   );
 }
@@ -134,19 +134,19 @@ function SharedTab({ userId }: { userId: number }) {
   return (
     <>
       {error && <Alert>{error}</Alert>}
-      {items.length === 0 && !error && <EmptyState title="Nothing shared here" body="Posts shared to this page — by its owner or a friend — appear here." />}
+      {items.length === 0 && !error && <EmptyState title="Chưa có bài được chia sẻ" body="Bài được chủ trang hoặc bạn bè chia sẻ lên trang này sẽ hiện ở đây." />}
       {items.map(s => (
         <button key={s.shareId} className="post" onClick={() => ui.openModal(<PostView post={s.blog} />, s.blog.title)}>
           <span className="pthumb" aria-hidden="true">{s.blog.thumbnailUrl ? <img src={s.blog.thumbnailUrl} alt="" /> : <Icon name="share" size={28} />}</span>
           <span style={{ minWidth: 0 }}>
-            <span className="kicker">Shared by {nameOf(s.sharedBy)} · {timeAgo(s.sharedAt)}</span>
+            <span className="kicker">{nameOf(s.sharedBy)} đã chia sẻ · {timeAgo(s.sharedAt)}</span>
             <h4>{s.blog.title}</h4>
             <p>{excerpt(postBody(s.blog))}</p>
-            <span className="pmeta"><span>{nameOf(s.blog.author)}</span><span>{s.blog.likeCount} likes</span></span>
+            <span className="pmeta"><span>{nameOf(s.blog.author)}</span><span>{s.blog.likeCount} lượt thích</span></span>
           </span>
         </button>
       ))}
-      {!last && <div style={{ textAlign: 'center', marginTop: 16 }}><button className="btn btn-ghost btn-sm" onClick={more}>Load more</button></div>}
+      {!last && <div style={{ textAlign: 'center', marginTop: 16 }}><button className="btn btn-ghost btn-sm" onClick={more}>Xem thêm</button></div>}
     </>
   );
 }
@@ -158,7 +158,7 @@ function PeopleTab({ userId, kind }: { userId: number; kind: 'followers' | 'foll
   return (
     <>
       {error && <Alert>{error}</Alert>}
-      {items.length === 0 && !error && <EmptyState title="Nobody here yet" body={kind === 'friends' ? 'Friends are people who follow each other.' : 'No one to show.'} />}
+      {items.length === 0 && !error && <EmptyState title="Chưa có ai" body={kind === 'friends' ? 'Bạn bè là hai người theo dõi lẫn nhau.' : 'Chưa có ai để hiển thị.'} />}
       <div className="people-list">
         {items.map(u => (
           <Link key={u.userId} className="person-row" to={`/people/${u.userId}`}>
@@ -166,13 +166,13 @@ function PeopleTab({ userId, kind }: { userId: number; kind: 'followers' | 'foll
             <span style={{ minWidth: 0 }}>
               <b>{nameOf(u)}</b> <span className="faint">@{u.username}</span><br />
               <span className="faint" style={{ fontSize: 12.5 }}>
-                {u.followerCount} followers{u.friend ? ' · your friend' : u.followedByMe ? ' · you follow' : u.followsMe ? ' · follows you' : ''}
+                {u.followerCount} người theo dõi{u.friend ? ' · bạn bè' : u.followedByMe ? ' · bạn đang theo dõi' : u.followsMe ? ' · đang theo dõi bạn' : ''}
               </span>
             </span>
           </Link>
         ))}
       </div>
-      {!last && <div style={{ textAlign: 'center', marginTop: 16 }}><button className="btn btn-ghost btn-sm" onClick={more}>Load more</button></div>}
+      {!last && <div style={{ textAlign: 'center', marginTop: 16 }}><button className="btn btn-ghost btn-sm" onClick={more}>Xem thêm</button></div>}
     </>
   );
 }

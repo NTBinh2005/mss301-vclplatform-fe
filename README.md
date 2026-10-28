@@ -26,7 +26,7 @@ Docker: start the backend stack first (`mss301-vslplatform-project`, `docker com
       /forgot-password  └─► ADMIN ─► /admin  categories  signs  users  posts  reports  requests
 ```
 
-- Sign in with a username **or** email. Register = details → email OTP → login.
+- UI in Vietnamese (`lang="vi"`, Be Vietnam Pro for full diacritics). Sign in with a username **or** email. Register = details → email OTP → login.
   Forgot password = email → OTP → new password.
 - Journey: each category is a chapter, split into lessons of 3 signs (watch → quiz → claim).
 - Studio: camera → 3-2-1 → 5 s clip → `POST /practice/evaluate` with the **vocabularyId**
@@ -51,7 +51,7 @@ All calls go through `src/services/*` (axios client in `src/api/client.ts`), typ
 
 | Service | Routes used |
 |---|---|
-| identity | `/auth/*`, `/users/me[/password,/avatar,/notifications]`, `/users/{id}`, `/users/search`, `/users/summaries`, `/users/admin/**` |
+| identity | `/auth/*`, `/users/me[/password,/avatar (upload / URL / remove),/notifications]`, `/users/{id}`, `/users/search`, `/users/summaries`, `/users/admin/**` |
 | learning | `/categories[/{id}/image]`, `/vocabularies[/{id}/image,/{id}/tutorial-video,/exists,/ai-synonyms]`, `/practice/*`, `/attempts`, `/vocabulary-suggestions[/admin]`, `/visits/track`, `/visits/admin/*`, `/public/stats` |
 | social | `/blogs[/{id}/likes,/shares,/reports,/comments,/thumbnail]`, `/blogs/user/{id}[/shared]`, `/blogs/search`, `/comments/**`, `/follows/**`, `/notifications/**`, `/blogs/admin/**` |
 

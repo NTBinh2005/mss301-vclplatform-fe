@@ -22,11 +22,11 @@ export default function Landing() {
         <Brand />
         <span className="spacer" />
         {status === 'authed' ? (
-          <Link className="btn btn-sm" to={home}>Open SignMentor <Icon name="arrowr" size={15} /></Link>
+          <Link className="btn btn-sm" to={home}>Vào SignMentor <Icon name="arrowr" size={15} /></Link>
         ) : (
           <>
-            <Link className="textlink hide-sm" to="/login">Sign in</Link>
-            <Link className="btn btn-lacquer btn-sm" to="/register">Start learning</Link>
+            <Link className="textlink hide-sm" to="/login">Đăng nhập</Link>
+            <Link className="btn btn-lacquer btn-sm" to="/register">Bắt đầu học</Link>
           </>
         )}
       </header>
@@ -35,50 +35,50 @@ export default function Landing() {
           <div className="hero">
             <span className="hero-hand" aria-hidden="true"><Hand frame={{ shape: 'open', rot: 10 }} size={460} /></span>
             <div style={{ position: 'relative' }}>
-              <p className="kicker">Vietnamese Sign Language · with an AI coach</p>
-              <h1 className="display">Learn to talk with your <em>hands</em>.</h1>
+              <p className="kicker">Ngôn ngữ Ký hiệu Việt Nam · có huấn luyện viên AI</p>
+              <h1 className="display">Học cách trò chuyện bằng <em>đôi tay</em>.</h1>
               <p className="lede">
-                Watch a sign, copy it in front of your camera, and get scored by a model trained on real signers.
-                Short lessons, honest feedback, and a <strong>community one chapter ahead of you</strong>.
+                Xem một ký hiệu, làm theo trước camera và được chấm điểm bởi mô hình học từ người ký thật.
+                Bài học ngắn, nhận xét thẳng thắn, và một <strong>cộng đồng luôn đi trước bạn một chương</strong>.
               </p>
               <div className="row" style={{ marginTop: 26 }}>
                 <Link className="btn btn-lacquer" to={status === 'authed' ? home : '/register'}>
-                  <Icon name="play" size={16} /> {status === 'authed' ? 'Continue learning' : 'Create a free account'}
+                  <Icon name="play" size={16} /> {status === 'authed' ? 'Học tiếp' : 'Tạo tài khoản miễn phí'}
                 </Link>
-                {status !== 'authed' && <Link className="btn btn-ghost" to="/login">I already have an account</Link>}
+                {status !== 'authed' && <Link className="btn btn-ghost" to="/login">Tôi đã có tài khoản</Link>}
               </div>
               {stats && (
                 <div className="figs" role="list" style={{ margin: '34px 0 0' }}>
-                  <div className="fig" role="listitem"><b>{stats.totalVocabs}</b><span>signs to learn</span></div>
-                  <div className="fig" role="listitem"><b>{stats.totalUsers ?? '—'}</b><span>learners</span></div>
-                  <div className="fig" role="listitem"><b>{Math.round(stats.satisfactionRate)}%</b><span>would recommend</span></div>
+                  <div className="fig" role="listitem"><b>{stats.totalVocabs}</b><span>ký hiệu để học</span></div>
+                  <div className="fig" role="listitem"><b>{stats.totalUsers ?? '—'}</b><span>học viên</span></div>
+                  <div className="fig" role="listitem"><b>{Math.round(stats.satisfactionRate)}%</b><span>hài lòng</span></div>
                 </div>
               )}
             </div>
             <div className="hero-stage">
               <SignPlayer frames={HELLO} size={220} autoplay />
-              <p className="notation" style={{ marginTop: 10 }}><span className="hs-chip">B</span>Xin chào — flat hand, palm out, wave twice</p>
+              <p className="notation" style={{ marginTop: 10 }}><span className="hs-chip">B</span>Xin chào — bàn tay duỗi, lòng tay hướng ra, vẫy hai lần</p>
             </div>
           </div>
 
-          <div className="rule-head"><h2>How it works</h2></div>
+          <div className="rule-head"><h2>Học như thế nào</h2></div>
           <div className="steps-3">
-            <div className="step-card"><b>01</b><h3>See it</h3><p>Every sign comes with a tutorial video and lives inside a short lesson of three, ordered the way conversations happen.</p></div>
-            <div className="step-card"><b>02</b><h3>Sign it</h3><p>Open the Studio, sign in front of your camera for five seconds, and the model tells you how close you came.</p></div>
-            <div className="step-card"><b>03</b><h3>Keep it</h3><p>Signs you have not nailed come back for review. Your streak, accuracy and achievements track the rest.</p></div>
+            <div className="step-card"><b>01</b><h3>Xem</h3><p>Mỗi ký hiệu có video hướng dẫn và nằm trong một bài ngắn gồm ba ký hiệu, sắp theo trình tự của một cuộc trò chuyện.</p></div>
+            <div className="step-card"><b>02</b><h3>Làm</h3><p>Mở Phòng tập, ký trước camera trong năm giây, mô hình sẽ cho bạn biết mình đã làm đúng đến đâu.</p></div>
+            <div className="step-card"><b>03</b><h3>Nhớ</h3><p>Ký hiệu chưa làm đúng sẽ quay lại để ôn. Chuỗi ngày học, độ chính xác và thành tích theo dõi phần còn lại.</p></div>
           </div>
 
           <div className="cta-band">
             <div>
-              <p className="kicker" style={{ color: 'rgba(246,240,228,.6)' }}>Five minutes a day</p>
-              <h2 className="display sm">Your first <em>hello</em> is one lesson away.</h2>
+              <p className="kicker" style={{ color: 'rgba(246,240,228,.6)' }}>Năm phút mỗi ngày</p>
+              <h2 className="display sm">Lời <em>xin chào</em> đầu tiên chỉ cách bạn một bài học.</h2>
             </div>
-            <Link className="btn cream" to={status === 'authed' ? home : '/register'}>Get started <Icon name="arrowr" size={16} /></Link>
+            <Link className="btn cream" to={status === 'authed' ? home : '/register'}>Bắt đầu ngay <Icon name="arrowr" size={16} /></Link>
           </div>
         </section>
       </main>
       <footer>
-        <span>SignMentor — made for Vietnamese Sign Language learners.</span>
+        <span>SignMentor — dành cho người học Ngôn ngữ Ký hiệu Việt Nam.</span>
         <span>MSS301 · VSL Platform</span>
       </footer>
     </>

@@ -18,32 +18,32 @@ export default function Palette() {
     const lq = q.trim().toLowerCase();
     const go = (path: string) => () => { ui.closeLayer(); navigate(path); };
     const nav: Cmd[] = ([
-      ['Today', '/today', 'home'], ['Journey', '/learn', 'book'], ['Dictionary', '/dictionary', 'grid'],
-      ['Studio', '/studio', 'video'], ['Common room', '/community', 'users'], ['My posts', '/community/mine', 'edit'],
-      ['Request a sign', '/request', 'plus'], ['Profile', '/profile', 'user'],
+      ['Hôm nay', '/today', 'home'], ['Lộ trình', '/learn', 'book'], ['Từ điển', '/dictionary', 'grid'],
+      ['Phòng tập', '/studio', 'video'], ['Cộng đồng', '/community', 'users'], ['Bài viết của tôi', '/community/mine', 'edit'],
+      ['Đề xuất ký hiệu', '/request', 'plus'], ['Hồ sơ', '/profile', 'user'],
     ] as [string, string, IconName][])
       .filter(([l]) => !lq || l.toLowerCase().includes(lq))
       .map(([label, path, icon]) => ({ label, icon, run: go(path) }));
 
     const actions: Cmd[] = [];
-    if (nextLesson && (!lq || 'continue lesson'.includes(lq))) {
-      actions.push({ label: `Continue Lesson ${nextLesson.n}`, icon: 'play', run: go(`/lesson/${nextLesson.id}`) });
+    if (nextLesson && (!lq || 'học tiếp bài'.includes(lq))) {
+      actions.push({ label: `Học tiếp bài ${nextLesson.n}`, icon: 'play', run: go(`/lesson/${nextLesson.id}`) });
     }
-    if (due.length && (!lq || 'review'.includes(lq))) {
-      actions.push({ label: `Review ${due.length} due signs`, icon: 'refresh', run: () => ui.openModal(<ReviewSession queue={due} />, 'Review') });
+    if (due.length && (!lq || 'ôn tập'.includes(lq))) {
+      actions.push({ label: `Ôn ${due.length} ký hiệu cần ôn`, icon: 'refresh', run: () => ui.openModal(<ReviewSession queue={due} />, 'Ôn tập') });
     }
-    if (!lq || 'studio practice'.includes(lq)) actions.push({ label: 'Practise in the Studio', icon: 'camera', run: go('/studio') });
-    if (!lq || 'mentor ask'.includes(lq)) actions.push({ label: 'Ask Mentor', icon: 'send', run: () => ui.openMentor() });
+    if (!lq || 'phòng tập luyện'.includes(lq)) actions.push({ label: 'Luyện trong Phòng tập', icon: 'camera', run: go('/studio') });
+    if (!lq || 'hỏi mentor'.includes(lq)) actions.push({ label: 'Hỏi Mentor', icon: 'send', run: () => ui.openMentor() });
 
     const signCmds: Cmd[] = lq
       ? signs.filter(s => s.word.toLowerCase().includes(lq) || s.categoryName.toLowerCase().includes(lq)).slice(0, 6)
-        .map(s => ({ label: `Practise “${s.word}”`, icon: 'video' as IconName, run: go(`/studio?sign=${s.id}`) }))
+        .map(s => ({ label: `Luyện “${s.word}”`, icon: 'video' as IconName, run: go(`/studio?sign=${s.id}`) }))
       : [];
 
     return [
-      { name: 'Go to', items: nav },
-      { name: 'Actions', items: actions },
-      { name: 'Signs', items: signCmds },
+      { name: 'Đi tới', items: nav },
+      { name: 'Thao tác', items: actions },
+      { name: 'Ký hiệu', items: signCmds },
     ].filter(g => g.items.length);
   }, [q, signs, due, nextLesson, navigate, ui]);
 
@@ -51,11 +51,11 @@ export default function Palette() {
   const current = Math.min(sel, Math.max(0, flat.length - 1));
 
   return (
-    <div className="palette" role="dialog" aria-modal="true" aria-label="Search and commands">
+    <div className="palette" role="dialog" aria-modal="true" aria-label="Tìm kiếm và lệnh">
       <input
-        placeholder="Where to? Try “studio”, “review”, or a sign…"
+        placeholder="Đi đâu? Thử “phòng tập”, “ôn tập”, hoặc một ký hiệu…"
         value={q}
-        aria-label="Search commands"
+        aria-label="Tìm lệnh"
         onChange={e => { setQ(e.target.value); setSel(0); }}
         onKeyDown={e => {
           if (e.key === 'ArrowDown') { e.preventDefault(); setSel(Math.min(current + 1, flat.length - 1)); }
@@ -66,7 +66,7 @@ export default function Palette() {
       <div className="pal-list">
         {flat.length === 0 && (
           <p style={{ padding: 22, color: 'var(--ink-2)' }}>
-            No matches. Mentor can probably still help — <button className="textlink" onClick={() => ui.openMentor(q)}>ask them</button>.
+            Không tìm thấy. Có lẽ Mentor vẫn giúp được — <button className="textlink" onClick={() => ui.openMentor(q)}>hỏi Mentor</button>.
           </p>
         )}
         {groups.map(g => (

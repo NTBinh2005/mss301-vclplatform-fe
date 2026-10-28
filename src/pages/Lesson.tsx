@@ -57,9 +57,9 @@ function LessonPage({ id }: { id?: string }) {
       <section className="view">
         <div className="lockview">
           <span className="st-stamp"><Icon name="lock" size={26} /></span>
-          <h1 className="display sm">Lesson {lesson.n} is still ahead of you</h1>
-          <p className="lede" style={{ margin: '10px auto 24px' }}>Finish the previous lesson in “{chapter.category.name}” to unlock “{lesson.title}”.</p>
-          <Link className="btn" to="/learn">Back to the journey</Link>
+          <h1 className="display sm">Bài {lesson.n} vẫn còn ở phía trước</h1>
+          <p className="lede" style={{ margin: '10px auto 24px' }}>Hoàn thành bài trước trong “{chapter.category.name}” để mở khóa “{lesson.title}”.</p>
+          <Link className="btn" to="/learn">Quay lại lộ trình</Link>
         </div>
       </section>
     );
@@ -81,11 +81,11 @@ function LessonPage({ id }: { id?: string }) {
   return (
     <section className="view">
       <div className="lesson-top">
-        <Link className="textlink" to="/learn"><Icon name="arrowl" size={15} /> Journey</Link>
-        <span className="kicker">Lesson {lesson.n} · {chapter.category.name}</span>
-        <div className="stepdots" role="tablist" aria-label="Lesson steps">
+        <Link className="textlink" to="/learn"><Icon name="arrowl" size={15} /> Lộ trình</Link>
+        <span className="kicker">Bài {lesson.n} · {chapter.category.name}</span>
+        <div className="stepdots" role="tablist" aria-label="Các bước của bài">
           {Array.from({ length: total }, (_, i) => (
-            <button key={i} className={`stepdot ${i < pos ? 'done' : i === pos ? 'now' : ''}`} aria-label={`Step ${i + 1}`}
+            <button key={i} className={`stepdot ${i < pos ? 'done' : i === pos ? 'now' : ''}`} aria-label={`Bước ${i + 1}`}
               onClick={() => { if (i <= pos) setPos(i); }}>{i < pos ? '✓' : i + 1}</button>
           ))}
         </div>
@@ -105,27 +105,27 @@ function LessonPage({ id }: { id?: string }) {
         <div className="lstep" style={{ gridTemplateColumns: '1fr', textAlign: 'center' }}>
           <div style={{ maxWidth: 460, margin: '30px auto' }}>
             <span style={{ display: 'inline-block', opacity: 0.9 }}><Hand frame={{ shape: 'open', rot: -10 }} size={120} /></span>
-            <h2 className="quiz-q">You recognised {score} of {questions.length}. Claim the lesson.</h2>
-            <button className="btn btn-lacquer" onClick={claim}><Icon name="seal" size={17} /> Complete “{lesson.title}”</button>
+            <h2 className="quiz-q">Bạn nhận ra {score}/{questions.length} ký hiệu. Hoàn thành bài nào.</h2>
+            <button className="btn btn-lacquer" onClick={claim}><Icon name="seal" size={17} /> Hoàn thành “{lesson.title}”</button>
           </div>
         </div>
       )}
 
       {complete && (
         <div className="complete-veil" onClick={e => { if (e.target === e.currentTarget) setComplete(false); }}>
-          <div className="complete-card" role="dialog" aria-modal="true" aria-label="Lesson complete">
+          <div className="complete-card" role="dialog" aria-modal="true" aria-label="Hoàn thành bài học">
             <div className="stamp-big"><Icon name="check" size={40} /></div>
-            <h2 style={{ fontFamily: 'var(--fd)', fontSize: 30, fontWeight: 600 }}>Lesson complete</h2>
-            <p style={{ color: 'var(--ink-2)', marginTop: 6 }}>“{lesson.title}” is part of your story now. Sign each one in the Studio to mark it learned.</p>
+            <h2 style={{ fontFamily: 'var(--fd)', fontSize: 30, fontWeight: 600 }}>Hoàn thành bài học</h2>
+            <p style={{ color: 'var(--ink-2)', marginTop: 6 }}>“{lesson.title}” giờ đã là của bạn. Hãy ký từng ký hiệu trong Phòng tập để đánh dấu đã thuộc.</p>
             <div className="complete-stats">
-              <span>{signs.length} signs seen</span><span>{score}/{questions.length} recognised</span>
-              {L.stats && <span>Day {L.stats.currentStreak} streak</span>}
+              <span>Đã xem {signs.length} ký hiệu</span><span>Nhận ra {score}/{questions.length}</span>
+              {L.stats && <span>Chuỗi {L.stats.currentStreak} ngày</span>}
             </div>
             <div className="complete-actions">
-              <Link className="btn btn-ghost" to={`/studio?sign=${signs[0]?.id ?? ''}`}><Icon name="video" size={15} /> Practise these</Link>
+              <Link className="btn btn-ghost" to={`/studio?sign=${signs[0]?.id ?? ''}`}><Icon name="video" size={15} /> Luyện các ký hiệu này</Link>
               {nextLesson
-                ? <Link className="btn btn-lacquer" to={`/lesson/${nextLesson.id}`}>Next lesson <Icon name="arrowr" size={16} /></Link>
-                : <Link className="btn btn-lacquer" to="/learn">Back to journey</Link>}
+                ? <Link className="btn btn-lacquer" to={`/lesson/${nextLesson.id}`}>Bài tiếp theo <Icon name="arrowr" size={16} /></Link>
+                : <Link className="btn btn-lacquer" to="/learn">Quay lại lộ trình</Link>}
             </div>
           </div>
         </div>
@@ -141,27 +141,27 @@ function WatchStep({ sign, idx, n, onNext, onBack, onPractise }: {
     <div className="lstep">
       <SignMedia sign={sign} size={250} />
       <div>
-        <p className="kicker">Sign {idx} of {n} · watch closely</p>
+        <p className="kicker">Ký hiệu {idx}/{n} · xem kỹ</p>
         <h2 className="sign-word">{sign.word}</h2>
         <p className="sign-en">{sign.categoryName}</p>
         <div style={{ marginTop: 12 }} className={`st-${sign.status}`}><StatusTag status={sign.status} /></div>
         <div className="transcript">
-          <h4>How to sign it</h4>
-          <p>{sign.description || 'Play the demonstration a few times. Watch the handshape first, then the path the hand travels, then the pace.'}</p>
+          <h4>Cách ký</h4>
+          <p>{sign.description || 'Xem video minh họa vài lần. Chú ý hình dạng tay trước, rồi đường đi của tay, rồi tốc độ.'}</p>
         </div>
         <p className="example">
-          <em>Watch it three times: once for the handshape, once for the movement, once for the rhythm.</em><br />
-          <span>Then mirror it slowly before trying it at full speed.</span>
+          <em>Xem ba lần: một lần cho hình dạng tay, một lần cho chuyển động, một lần cho nhịp.</em><br />
+          <span>Sau đó làm chậm theo gương trước khi thử với tốc độ thật.</span>
         </p>
         <div className="lstep-nav">
           <div className="row">
-            {onBack && <button className="iconbtn" onClick={onBack} aria-label="Previous sign" title="Previous sign"><Icon name="arrowl" size={17} /></button>}
+            {onBack && <button className="iconbtn" onClick={onBack} aria-label="Ký hiệu trước" title="Ký hiệu trước"><Icon name="arrowl" size={17} /></button>}
             <button className="btn btn-ghost btn-sm" onClick={onPractise} disabled={sign.expectedId == null}
-              title={sign.expectedId == null ? 'This sign is not connected to the AI model yet' : undefined}>
-              <Icon name="video" size={15} /> Try in Studio
+              title={sign.expectedId == null ? 'Ký hiệu này chưa được nối với mô hình AI' : undefined}>
+              <Icon name="video" size={15} /> Thử trong Phòng tập
             </button>
           </div>
-          <button className="btn" onClick={onNext}>{idx < n ? 'Got it — next sign' : 'Got it — quick check'} <Icon name="arrowr" size={16} /></button>
+          <button className="btn" onClick={onNext}>{idx < n ? 'Đã hiểu — ký hiệu tiếp' : 'Đã hiểu — kiểm tra nhanh'} <Icon name="arrowr" size={16} /></button>
         </div>
       </div>
     </div>
@@ -175,15 +175,15 @@ function QuizStep({ q, n, total, picked, onPick, onNext }: {
   return (
     <div className="lstep" style={{ gridTemplateColumns: '1fr' }}>
       <div style={{ maxWidth: 640, margin: '0 auto', width: '100%' }}>
-        <p className="kicker">Check · question {n} of {total}</p>
-        <h2 className="quiz-q">What does this sign mean?</h2>
+        <p className="kicker">Kiểm tra · câu {n}/{total}</p>
+        <h2 className="quiz-q">Ký hiệu này có nghĩa là gì?</h2>
         <div style={{ maxWidth: 360, marginBottom: 18 }}><SignMedia key={q.sign.id} sign={q.sign} size={170} /></div>
         {q.options.map(o => {
           const cls = answered ? (o === q.sign.word ? 'correct' : o === picked ? 'wrong' : '') : '';
           return <button key={o} className={`opt ${cls}`} disabled={answered} onClick={() => onPick(o)}>{o}</button>;
         })}
-        <p className="qnote" aria-live="polite">{answered ? (picked === q.sign.word ? 'Correct — well read.' : 'Not quite. The right answer is highlighted.') : ''}</p>
-        {answered && <button className="btn" onClick={onNext} autoFocus>{n >= total ? 'Finish' : 'Next question'} <Icon name="arrowr" size={16} /></button>}
+        <p className="qnote" aria-live="polite">{answered ? (picked === q.sign.word ? 'Chính xác — đọc tốt lắm.' : 'Chưa đúng. Đáp án đúng đã được tô sáng.') : ''}</p>
+        {answered && <button className="btn" onClick={onNext} autoFocus>{n >= total ? 'Hoàn tất' : 'Câu tiếp theo'} <Icon name="arrowr" size={16} /></button>}
       </div>
     </div>
   );

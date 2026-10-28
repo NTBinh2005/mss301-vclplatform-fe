@@ -3,47 +3,47 @@
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const PASSWORD_HINT = '6–100 characters.';
+export const PASSWORD_HINT = 'Từ 6 đến 100 ký tự.';
 
-export const required = (v: string, label: string) => (v.trim() ? '' : `${label} is required.`);
+export const required = (v: string, label: string) => (v.trim() ? '' : `${label} không được để trống.`);
 
 export function text(v: string, label: string, max?: number) {
-  if (!v.trim()) return `${label} is required.`;
-  if (max != null && v.length > max) return `${label} must be at most ${max} characters.`;
+  if (!v.trim()) return `${label} không được để trống.`;
+  if (max != null && v.length > max) return `${label} tối đa ${max} ký tự.`;
   return '';
 }
 
 export function email(v: string) {
   const t = v.trim();
-  if (!t) return 'Email is required.';
-  if (v.length > 100) return 'Email must be at most 100 characters.';
-  if (!EMAIL_RE.test(t)) return 'That does not look like an email address.';
+  if (!t) return 'Email không được để trống.';
+  if (v.length > 100) return 'Email tối đa 100 ký tự.';
+  if (!EMAIL_RE.test(t)) return 'Email không đúng định dạng.';
   return '';
 }
 
 export function username(v: string) {
   const t = v.trim();
-  if (!t) return 'Username is required.';
-  if (t.length < 3 || t.length > 50) return 'Username must be 3–50 characters.';
+  if (!t) return 'Tên đăng nhập không được để trống.';
+  if (t.length < 3 || t.length > 50) return 'Tên đăng nhập phải từ 3 đến 50 ký tự.';
   return '';
 }
 
 export function fullName(v: string) {
-  if (!v.trim()) return 'Full name is required.';
-  if (v.length > 100) return 'Full name must be at most 100 characters.';
+  if (!v.trim()) return 'Họ và tên không được để trống.';
+  if (v.length > 100) return 'Họ và tên tối đa 100 ký tự.';
   return '';
 }
 
 export function password(v: string) {
-  if (!v) return 'Password is required.';
-  if (v.length < 6 || v.length > 100) return 'Password must be 6–100 characters.';
+  if (!v) return 'Mật khẩu không được để trống.';
+  if (v.length < 6 || v.length > 100) return 'Mật khẩu phải từ 6 đến 100 ký tự.';
   return '';
 }
 
 export function nonNegativeInt(v: string, label: string) {
   const t = v.trim();
-  if (!t) return `${label} is required.`;
-  if (!/^\d+$/.test(t)) return `${label} must be a whole number of 0 or more.`;
+  if (!t) return `${label} không được để trống.`;
+  if (!/^\d+$/.test(t)) return `${label} phải là số nguyên từ 0 trở lên.`;
   return '';
 }
 

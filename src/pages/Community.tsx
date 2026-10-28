@@ -17,18 +17,18 @@ export function CommunityHeader({ tab }: { tab: 'room' | 'mine' }) {
     <>
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <p className="kicker">The common room</p>
-          <h1 className="display sm">{tab === 'room' ? <>Learning is a <em>conversation</em>.</> : <>Your <em>posts</em>.</>}</h1>
+          <p className="kicker">Cộng đồng</p>
+          <h1 className="display sm">{tab === 'room' ? <>Học là một cuộc <em>trò chuyện</em>.</> : <>Bài viết <em>của bạn</em>.</>}</h1>
         </div>
         <div className="seg" role="tablist">
-          <button role="tab" aria-selected={tab === 'room'} className={tab === 'room' ? 'on' : ''} onClick={() => navigate('/community')}>Common room</button>
-          <button role="tab" aria-selected={tab === 'mine'} className={tab === 'mine' ? 'on' : ''} onClick={() => navigate('/community/mine')}>My posts</button>
+          <button role="tab" aria-selected={tab === 'room'} className={tab === 'room' ? 'on' : ''} onClick={() => navigate('/community')}>Cộng đồng</button>
+          <button role="tab" aria-selected={tab === 'mine'} className={tab === 'mine' ? 'on' : ''} onClick={() => navigate('/community/mine')}>Bài của tôi</button>
         </div>
       </div>
       <p className="lede">
         {tab === 'room'
-          ? 'Practice tips from people one chapter ahead of you, Deaf culture from people who live it, and milestones worth stealing courage from.'
-          : 'Drafts stay private until you publish them. Posts removed by a moderator show the reason here.'}
+          ? 'Mẹo luyện tập từ những người đi trước bạn một chương, văn hóa Điếc từ chính người trong cuộc, và những cột mốc truyền cảm hứng.'
+          : 'Bản nháp chỉ mình bạn thấy cho tới khi đăng. Bài bị quản trị viên gỡ sẽ hiện lý do tại đây.'}
       </p>
     </>
   );
@@ -61,7 +61,7 @@ export default function Community() {
       setError('');
     } catch (err) {
       setPosts(list => list || []);
-      setError(apiErrorMessage(err, 'Could not load the common room.'));
+      setError(apiErrorMessage(err, 'Không tải được bảng tin cộng đồng.'));
     }
   }, []);
 
@@ -79,27 +79,27 @@ export default function Community() {
     const id = Number(params.get('post'));
     if (!id) return;
     setParams({}, { replace: true });
-    blogApi.get(id).then(open).catch(() => ui.toast('That post is no longer available', 'alert'));
+    blogApi.get(id).then(open).catch(() => ui.toast('Bài viết này không còn nữa', 'alert'));
   }, [params, setParams, open, ui]);
 
   const publish = async (e: FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) { ui.toast('Give your post a title and some words first', 'flag'); return; }
+    if (!title.trim() || !content.trim()) { ui.toast('Hãy đặt tiêu đề và viết vài dòng trước đã', 'flag'); return; }
     setPosting(true);
     try {
       const created = await blogApi.create({ title: title.trim(), content: content.trim(), status: 'PUBLISHED' });
       setPosts(list => [created, ...(list || [])]);
       setTitle(''); setContent('');
-      ui.toast('Posted to the common room', 'send');
+      ui.toast('Đã đăng lên cộng đồng', 'send');
     } catch (err) {
-      ui.toast(apiErrorMessage(err, 'Could not publish the post'), 'alert');
+      ui.toast(apiErrorMessage(err, 'Không đăng được bài viết'), 'alert');
     } finally { setPosting(false); }
   };
 
   const search = async (e: FormEvent) => {
     e.preventDefault();
     if (!q.trim()) { setFound(null); return; }
-    try { setFound(await blogApi.search(q.trim(), 0, 10)); } catch (err) { ui.toast(apiErrorMessage(err, 'Search failed'), 'alert'); }
+    try { setFound(await blogApi.search(q.trim(), 0, 10)); } catch (err) { ui.toast(apiErrorMessage(err, 'Tìm kiếm thất bại'), 'alert'); }
   };
 
   const markAll = async () => {
@@ -108,7 +108,7 @@ export default function Community() {
 
   const openNote = async (n: NotificationResponse) => {
     if (!n.read) { notificationApi.markRead(n.id).catch(() => {}); setUnread(u => Math.max(0, u - 1)); setNotes(list => list.map(x => (x.id === n.id ? { ...x, read: true } : x))); }
-    if (n.blogId) blogApi.get(n.blogId).then(open).catch(() => ui.toast('That post is no longer available', 'alert'));
+    if (n.blogId) blogApi.get(n.blogId).then(open).catch(() => ui.toast('Bài viết này không còn nữa', 'alert'));
     else if (n.type === 'FOLLOW' && n.actor) navigate(`/people/${n.actor.userId}`);
   };
 
@@ -126,14 +126,14 @@ export default function Community() {
       <form className="compose" onSubmit={publish}>
         <div className="row">
           <Avatar name={user?.fullName} url={user?.avatarUrl} />
-          <input placeholder="Share a tip, a win, or a question…" value={title} onChange={e => setTitle(e.target.value)} aria-label="Post title" maxLength={255} />
+          <input placeholder="Chia sẻ một mẹo, một thành tích hay một câu hỏi…" value={title} onChange={e => setTitle(e.target.value)} aria-label="Tiêu đề bài viết" maxLength={255} />
         </div>
         {title && (
           <>
-            <textarea placeholder="Tell the story…" value={content} onChange={e => setContent(e.target.value)} aria-label="Post body" />
+            <textarea placeholder="Kể câu chuyện của bạn…" value={content} onChange={e => setContent(e.target.value)} aria-label="Nội dung bài viết" />
             <div className="row" style={{ justifyContent: 'flex-end' }}>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setTitle(''); setContent(''); }}>Cancel</button>
-              <button className="btn btn-sm" disabled={posting}>{posting ? <Spinner /> : <Icon name="send" size={15} />} Post</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setTitle(''); setContent(''); }}>Hủy</button>
+              <button className="btn btn-sm" disabled={posting}>{posting ? <Spinner /> : <Icon name="send" size={15} />} Đăng</button>
             </div>
           </>
         )}
@@ -143,24 +143,24 @@ export default function Community() {
         <div>
           <form className="dict-search" onSubmit={search} style={{ maxWidth: 'none', marginBottom: 16 }}>
             <Icon name="search" size={17} />
-            <input placeholder="Search posts and people…" value={q} onChange={e => { setQ(e.target.value); if (!e.target.value) setFound(null); }} aria-label="Search posts" />
-            {q && <button type="button" className="clear-x" onClick={() => { setQ(''); setFound(null); }} aria-label="Clear search"><Icon name="x" size={15} /></button>}
+            <input placeholder="Tìm bài viết và mọi người…" value={q} onChange={e => { setQ(e.target.value); if (!e.target.value) setFound(null); }} aria-label="Tìm bài viết" />
+            {q && <button type="button" className="clear-x" onClick={() => { setQ(''); setFound(null); }} aria-label="Xóa tìm kiếm"><Icon name="x" size={15} /></button>}
           </form>
           {found && (
             <p className="result-line">
-              {found.blogs.content.length} {found.blogs.content.length === 1 ? 'post' : 'posts'} for “{q.trim()}”
-              <button className="linkbtn" onClick={() => { setQ(''); setFound(null); }}>Back to the feed</button>
+              {found.blogs.content.length} bài viết cho “{q.trim()}”
+              <button className="linkbtn" onClick={() => { setQ(''); setFound(null); }}>Quay lại bảng tin</button>
             </p>
           )}
           {error && <Alert>{error}</Alert>}
 
           {found && found.users.content.length > 0 && (
             <div style={{ marginBottom: 18 }}>
-              <p className="kicker" style={{ marginBottom: 8 }}>People</p>
+              <p className="kicker" style={{ marginBottom: 8 }}>Mọi người</p>
               <div className="chip-row">
                 {found.users.content.map(u => (
                   <Link key={u.userId} className="chip" to={`/people/${u.userId}`}><Avatar name={nameOf(u)} url={u.avatarUrl} size={22} /> {nameOf(u)}
-                    <span className="faint">· {u.followerCount} followers{u.friend ? ' · friend' : u.followedByMe ? ' · following' : ''}</span></Link>
+                    <span className="faint">· {u.followerCount} người theo dõi{u.friend ? ' · bạn bè' : u.followedByMe ? ' · đang theo dõi' : ''}</span></Link>
                 ))}
               </div>
             </div>
@@ -170,11 +170,11 @@ export default function Community() {
             <>
               {featured && (
                 <button className="feature-post" onClick={() => open(featured)}>
-                  <span className="tagchip">Featured · most liked</span>
+                  <span className="tagchip">Nổi bật · nhiều lượt thích nhất</span>
                   <h3>{featured.title}</h3>
                   <p>{excerpt(postBody(featured), 220)}</p>
                   <p className="pmeta" style={{ marginTop: 12 }}>
-                    <b style={{ color: 'var(--ink)' }}>{nameOf(featured.author)}</b> · {timeAgo(featured.createdAt)} · {featured.likeCount} likes · {featured.commentCount} comments
+                    <b style={{ color: 'var(--ink)' }}>{nameOf(featured.author)}</b> · {timeAgo(featured.createdAt)} · {featured.likeCount} lượt thích · {featured.commentCount} bình luận
                   </p>
                 </button>
               )}
@@ -182,9 +182,9 @@ export default function Community() {
                 {feed.map(p => <PostRow key={p.id} p={p} onOpen={() => open(p)} />)}
               </div>
               {list.length === 0 && !error && (
-                <EmptyState title={found ? 'No posts match' : 'The room is quiet'} body={found ? 'Try other words.' : 'Be the first to share a tip, a win or a question.'} />
+                <EmptyState title={found ? 'Không có bài phù hợp' : 'Cộng đồng đang yên ắng'} body={found ? 'Thử từ khóa khác.' : 'Hãy là người đầu tiên chia sẻ một mẹo, thành tích hay câu hỏi.'} />
               )}
-              {!found && !last && <div style={{ textAlign: 'center', marginTop: 20 }}><button className="btn btn-ghost btn-sm" onClick={() => load(page + 1)}>Load more</button></div>}
+              {!found && !last && <div style={{ textAlign: 'center', marginTop: 20 }}><button className="btn btn-ghost btn-sm" onClick={() => load(page + 1)}>Xem thêm</button></div>}
             </>
           )}
         </div>
@@ -192,44 +192,44 @@ export default function Community() {
         <aside>
           {challenge && (
             <div className="challenge">
-              <span className="tagchip">Weekly challenge</span>
-              <h3>Sign “{challenge.word}” and share it</h3>
-              <p>Get it scored in the Studio, then post how it went — what clicked, what didn’t.</p>
-              <p className="subs">Everyone gets the same sign this week</p>
-              <button className="btn btn-sm" onClick={() => { navigate(`/studio?sign=${challenge.id}`); ui.toast(`Challenge accepted — sign “${challenge.word}”`, 'flag'); }}>
-                <Icon name="video" size={15} /> I’m in — take me to the Studio
+              <span className="tagchip">Thử thách tuần</span>
+              <h3>Ký “{challenge.word}” và chia sẻ</h3>
+              <p>Chấm điểm trong Phòng tập, rồi đăng bài kể lại — chỗ nào ổn, chỗ nào chưa.</p>
+              <p className="subs">Tuần này ai cũng có chung một ký hiệu</p>
+              <button className="btn btn-sm" onClick={() => { navigate(`/studio?sign=${challenge.id}`); ui.toast(`Nhận thử thách — ký “${challenge.word}”`, 'flag'); }}>
+                <Icon name="video" size={15} /> Tham gia — đến Phòng tập
               </button>
             </div>
           )}
 
           <div className="side-block">
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 17, margin: 0 }}>Notifications {unread > 0 && <span className="badge-dot">{unread}</span>}</h3>
-              {unread > 0 && <button className="linkbtn" style={{ fontSize: 12.5 }} onClick={markAll}>Mark all read</button>}
+              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 17, margin: 0 }}>Thông báo {unread > 0 && <span className="badge-dot">{unread}</span>}</h3>
+              {unread > 0 && <button className="linkbtn" style={{ fontSize: 12.5 }} onClick={markAll}>Đánh dấu đã đọc hết</button>}
             </div>
             {notes.length ? notes.map(n => (
               <button key={n.id} className={`notif ${n.read ? '' : 'unread'}`} onClick={() => openNote(n)}>
                 <b>{nameOf(n.actor)}</b> {notificationText(n.type)}
                 <span>{n.blogTitle ? `${n.blogTitle} · ` : ''}{timeAgo(n.createdAt)}</span>
               </button>
-            )) : <p className="muted" style={{ fontSize: 13.5, marginTop: 8 }}>Likes, comments, mentions and new followers show up here.</p>}
+            )) : <p className="muted" style={{ fontSize: 13.5, marginTop: 8 }}>Lượt thích, bình luận, lượt nhắc tên và người theo dõi mới sẽ hiện ở đây.</p>}
           </div>
 
           {discussions.length > 0 && (
             <div className="side-block">
-              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 17 }}>Active discussions</h3>
+              <h3 style={{ fontFamily: 'var(--fd)', fontSize: 17 }}>Thảo luận sôi nổi</h3>
               {discussions.map(p => (
                 <button key={p.id} className="disc-item" style={{ width: '100%', textAlign: 'left' }} onClick={() => open(p)}>
-                  <b>{p.title}</b><span>{nameOf(p.author)} · {p.commentCount} comments</span>
+                  <b>{p.title}</b><span>{nameOf(p.author)} · {p.commentCount} bình luận</span>
                 </button>
               ))}
             </div>
           )}
 
           <div className="side-block">
-            <h3 style={{ fontFamily: 'var(--fd)', fontSize: 17 }}>Your writing</h3>
-            <p className="muted" style={{ fontSize: 13.5, marginBottom: 10 }}>Edit drafts, add a cover image, or see moderator notes.</p>
-            <Link className="btn btn-ghost btn-sm" to="/community/mine"><Icon name="edit" size={14} /> My posts</Link>
+            <h3 style={{ fontFamily: 'var(--fd)', fontSize: 17 }}>Bài viết của bạn</h3>
+            <p className="muted" style={{ fontSize: 13.5, marginBottom: 10 }}>Sửa bản nháp, thêm ảnh bìa, hoặc xem ghi chú của quản trị viên.</p>
+            <Link className="btn btn-ghost btn-sm" to="/community/mine"><Icon name="edit" size={14} /> Bài của tôi</Link>
           </div>
         </aside>
       </div>

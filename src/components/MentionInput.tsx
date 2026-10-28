@@ -55,7 +55,7 @@ export default function MentionInput({ value, mention, onChange, placeholder, la
           else if (e.key === 'Escape') { e.stopPropagation(); setFound([]); }
         }} />
       {found.length > 0 && (
-        <span className="mention-list" role="listbox" aria-label="People to mention">
+        <span className="mention-list" role="listbox" aria-label="Người có thể nhắc tên">
           {found.map((u, i) => (
             <button type="button" key={u.userId} role="option" aria-selected={i === active} className={i === active ? 'on' : ''}
               onMouseDown={e => { e.preventDefault(); pick(u); }}>

@@ -19,7 +19,7 @@ interface AnalyzeInput {
 export async function analyzeHands({ clipBlob, classId, sampleVideoUrl }: AnalyzeInput): Promise<HandFeedback> {
   const ref = await loadReference(classId, sampleVideoUrl);
   if (!ref) {
-    return emptyFeedback('No reference for this sign yet (no hands could be read from its tutorial video).');
+    return emptyFeedback('Chưa có mẫu tham chiếu cho từ này (video mẫu chưa nhận diện được bàn tay).');
   }
 
   const clipUrl = URL.createObjectURL(clipBlob);
@@ -27,7 +27,7 @@ export async function analyzeHands({ clipBlob, classId, sampleVideoUrl }: Analyz
     const frames = await extractFromSource(clipUrl);
     const { right, left } = buildSequences(frames);
     if (!right?.length && !left?.length) {
-      return emptyFeedback('No hands were found in your clip. Keep your hands clearly inside the frame.');
+      return emptyFeedback('Không phát hiện được bàn tay trong video của bạn. Hãy giữ tay rõ trong khung hình.');
     }
     return buildFeedback(right, left, ref);
   } finally {

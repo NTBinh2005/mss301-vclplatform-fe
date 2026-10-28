@@ -32,12 +32,12 @@ export default function MentorDrawer({ ask }: { ask?: string }) {
   const streak = stats?.currentStreak ?? 0;
 
   const go = (path: string) => () => { ui.closeLayer(); navigate(path); };
-  const review = () => ui.openModal(<ReviewSession queue={due} />, 'Review');
+  const review = () => ui.openModal(<ReviewSession queue={due} />, 'Ôn tập');
   const push = (m: Omit<Msg, 'id'>) => setMsgs(list => [...list, { ...m, id: ++seq.current }]);
 
   const findSign = (q: string): Sign | undefined => {
     const quoted = q.match(/[“"']([^”"']+)[”"']/)?.[1];
-    const tail = q.match(/sign\s+(.+?)\??$/i)?.[1];
+    const tail = q.match(/(?:sign|ký hiệu|ký)\s+(.+?)(?:\s+(?:thế nào|như thế nào|ra sao))?\??$/i)?.[1];
     const needle = (quoted || tail || '').trim().toLowerCase();
     if (!needle) return signs.find(s => q.toLowerCase().includes(s.word.toLowerCase()));
     return signs.find(s => s.word.toLowerCase() === needle) || signs.find(s => s.word.toLowerCase().includes(needle));
@@ -46,44 +46,44 @@ export default function MentorDrawer({ ask }: { ask?: string }) {
   const reply = (q: string) => {
     const lq = q.toLowerCase();
     const target = findSign(q);
-    if (/review|ôn|plan/.test(lq)) {
+    if (/review|ôn|plan|kế hoạch/.test(lq)) {
       push({
         me: false,
-        body: <>Here is your plan: <strong>{due.length} signs</strong> are waiting for review
-          {due.length ? <> — start with “{due[0].word}”, you have practised it but not nailed it yet</> : null}.
-          {nextLesson && <> After that, Lesson {nextLesson.n} takes about {nextLesson.minutes} minutes.</>} Two minutes of review now saves twenty tomorrow.</>,
-        action: due.length ? { label: 'Start the review', run: review } : nextLesson ? { label: 'Open the lesson', run: go(`/lesson/${nextLesson.id}`) } : undefined,
+        body: <>Kế hoạch của bạn: <strong>{due.length} ký hiệu</strong> đang chờ ôn
+          {due.length ? <> — bắt đầu với “{due[0].word}”, bạn đã luyện nhưng chưa làm đúng</> : null}.
+          {nextLesson && <> Sau đó, Bài {nextLesson.n} mất khoảng {nextLesson.minutes} phút.</>} Hai phút ôn hôm nay tiết kiệm hai mươi phút ngày mai.</>,
+        action: due.length ? { label: 'Bắt đầu ôn', run: review } : nextLesson ? { label: 'Mở bài học', run: go(`/lesson/${nextLesson.id}`) } : undefined,
       });
     } else if (target) {
       push({
         me: false,
         body: <>
           <div className="sp" style={{ alignItems: 'flex-start' }}><SignPlayer frames={target.frames} size={110} autoplay /></div>
-          “{target.word}” · {target.categoryName}. {target.description || 'Watch the tutorial video in the Dictionary, then copy it in front of the camera.'} Try it with me:
+          “{target.word}” · {target.categoryName}. {target.description || 'Xem video hướng dẫn trong Từ điển, rồi làm theo trước camera.'} Thử cùng mình nhé:
         </>,
-        action: { label: 'Practise in Studio', run: go(`/studio?sign=${target.id}`) },
+        action: { label: 'Luyện trong Phòng tập', run: go(`/studio?sign=${target.id}`) },
       });
-    } else if (/streak|day|ngày/.test(lq)) {
+    } else if (/streak|day|ngày|chuỗi/.test(lq)) {
       push({
         me: false,
-        body: <>You are on a <strong>{streak}-day streak</strong>{stats?.longestStreak ? <> (your best is {stats.longestStreak})</> : null}. Today needs {Math.max(0, goal - activityToday)} more {goal - activityToday === 1 ? 'activity' : 'activities'} to hit your goal — and one Studio attempt keeps the streak alive.</>,
+        body: <>Bạn đang có <strong>chuỗi {streak} ngày</strong>{stats?.longestStreak ? <> (kỷ lục là {stats.longestStreak})</> : null}. Hôm nay cần thêm {Math.max(0, goal - activityToday)} hoạt động để đạt mục tiêu — và chỉ một lần tập trong Phòng tập là giữ được chuỗi.</>,
       });
-    } else if (/stuck|hard|difficult|khó|frustrat/.test(lq)) {
+    } else if (/stuck|hard|difficult|khó|bế tắc|nản|frustrat/.test(lq)) {
       push({
         me: false,
-        body: <>Being stuck is data, not failure. Usually it means you are drilling recall when you need production — so go to the Studio and <em>do</em> the signs — or you are tired, in which case one calm flashcard is a perfectly good session.</>,
-        action: { label: 'Take me to the Studio', run: go('/studio') },
+        body: <>Bế tắc là dữ liệu, không phải thất bại. Thường là do bạn chỉ ôn để nhớ trong khi cần <em>làm</em> — hãy vào Phòng tập và ký thật — hoặc bạn đang mệt, khi đó một thẻ ôn nhẹ nhàng cũng là một buổi học tốt.</>,
+        action: { label: 'Đến Phòng tập', run: go('/studio') },
       });
-    } else if (/accura|score|điểm/.test(lq) && stats) {
+    } else if (/accura|score|điểm|chính xác/.test(lq) && stats) {
       push({
         me: false,
-        body: <>Across {stats.totalAttempts} attempts you are at <strong>{Math.round(stats.accuracyRate)}% accuracy</strong>, with {stats.learnedCount} of {stats.totalVocabs} signs learned. The fastest way up is short, frequent attempts on the signs still marked “learning”.</>,
+        body: <>Qua {stats.totalAttempts} lần tập, độ chính xác của bạn là <strong>{Math.round(stats.accuracyRate)}%</strong>, đã thuộc {stats.learnedCount}/{stats.totalVocabs} ký hiệu. Cách tiến bộ nhanh nhất là tập ngắn, thường xuyên với các ký hiệu còn “đang học”.</>,
       });
     } else {
       push({
         me: false,
-        body: <>Here is what I would do next: review {due.length || 'a few'} signs{nextLesson ? <>, finish Lesson {nextLesson.n}</> : null}, then three minutes in the Studio. That is the whole loop — see, sign, get corrected.</>,
-        action: nextLesson ? { label: `Continue Lesson ${nextLesson.n}`, run: go(`/lesson/${nextLesson.id}`) } : { label: 'Open the Studio', run: go('/studio') },
+        body: <>Nếu là mình, mình sẽ: ôn {due.length || 'vài'} ký hiệu{nextLesson ? <>, học xong Bài {nextLesson.n}</> : null}, rồi ba phút trong Phòng tập. Đó là cả vòng lặp — xem, ký, được sửa.</>,
+        action: nextLesson ? { label: `Học tiếp bài ${nextLesson.n}`, run: go(`/lesson/${nextLesson.id}`) } : { label: 'Mở Phòng tập', run: go('/studio') },
       });
     }
   };
@@ -99,9 +99,9 @@ export default function MentorDrawer({ ask }: { ask?: string }) {
     asked.current = true;
     push({
       me: false,
-      body: <>Chào {firstName(user?.fullName)} — {streak ? `day ${streak}, and counting.` : 'good to see you.'} {due.length
-        ? `${due.length} signs are slipping toward the exit; a two-minute review would catch them.`
-        : nextLesson ? `Your review queue is clear, so today is for new ground: Lesson ${nextLesson.n} is waiting.` : 'Your review queue is clear.'} What shall we do?</>,
+      body: <>Chào {firstName(user?.fullName)} — {streak ? `ngày thứ ${streak} liên tiếp rồi đấy.` : 'rất vui được gặp bạn.'} {due.length
+        ? `${due.length} ký hiệu đang dần bị quên; hai phút ôn tập sẽ giữ chúng lại.`
+        : nextLesson ? `Hàng đợi ôn tập đã trống, hôm nay hãy học điều mới: Bài ${nextLesson.n} đang chờ.` : 'Hàng đợi ôn tập đã trống.'} Mình làm gì nhé?</>,
     });
     if (ask) send(ask);
   }, []); // greet once per open
@@ -109,11 +109,11 @@ export default function MentorDrawer({ ask }: { ask?: string }) {
   useEffect(() => { box.current?.scrollTo({ top: box.current.scrollHeight }); }, [msgs, typing]);
 
   return (
-    <div className="drawer" role="dialog" aria-modal="true" aria-label="Mentor, AI coach">
+    <div className="drawer" role="dialog" aria-modal="true" aria-label="Mentor, huấn luyện viên AI">
       <div className="drawer-head">
         <span className="mentor-dot" style={{ boxShadow: '0 0 0 5px rgba(20,101,90,.15)' }} />
-        <div style={{ flex: 1 }}><h2>Mentor</h2><p>Your sign-language coach · knows your progress</p></div>
-        <button className="iconbtn" onClick={ui.closeLayer} aria-label="Close Mentor"><Icon name="x" /></button>
+        <div style={{ flex: 1 }}><h2>Mentor</h2><p>Huấn luyện viên ngôn ngữ ký hiệu · nắm rõ tiến độ của bạn</p></div>
+        <button className="iconbtn" onClick={ui.closeLayer} aria-label="Đóng Mentor"><Icon name="x" /></button>
       </div>
       <div className="msgs" ref={box}>
         {msgs.map(m => (
@@ -125,8 +125,8 @@ export default function MentorDrawer({ ask }: { ask?: string }) {
         {typing && <div className="msg bot"><span className="typing"><i /><i /><i /></span></div>}
       </div>
       <form className="drawer-form" onSubmit={e => { e.preventDefault(); const v = text.trim(); if (v) { send(v); setText(''); } }}>
-        <input placeholder="Ask about any sign, or your plan…" aria-label="Message Mentor" value={text} onChange={e => setText(e.target.value)} />
-        <button className="iconbtn" style={{ background: 'var(--mentor)', color: 'var(--paper)' }} aria-label="Send"><Icon name="send" size={16} /></button>
+        <input placeholder="Hỏi về một ký hiệu, hoặc kế hoạch học…" aria-label="Nhắn cho Mentor" value={text} onChange={e => setText(e.target.value)} />
+        <button className="iconbtn" style={{ background: 'var(--mentor)', color: 'var(--paper)' }} aria-label="Gửi"><Icon name="send" size={16} /></button>
       </form>
     </div>
   );

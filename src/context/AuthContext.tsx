@@ -71,10 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return me;
     } catch (err) {
       tokens.clear();
-      if (isAxiosError(err) && !err.response) throw new Error('Cannot reach the server. Check that the API gateway is running.');
+      if (isAxiosError(err) && !err.response) throw new Error('Không kết nối được máy chủ. Hãy kiểm tra API gateway đã chạy chưa.');
       // 403 = locked account; identity explains why in the message.
-      if (isAxiosError(err) && err.response?.status === 403) throw new Error(apiErrorMessage(err, 'This account has been locked by an administrator.'));
-      throw new Error('Wrong username/email or password. Please check and try again.');
+      if (isAxiosError(err) && err.response?.status === 403) throw new Error(apiErrorMessage(err, 'Tài khoản của bạn đã bị quản trị viên khóa.'));
+      throw new Error('Sai tên đăng nhập/email hoặc mật khẩu. Vui lòng kiểm tra lại.');
     }
   }, [setUser]);
 

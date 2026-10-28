@@ -106,7 +106,7 @@ export async function extractFromSource(src: string, n = SAMPLE_FRAMES): Promise
 
   await new Promise<void>((resolve, reject) => {
     video.addEventListener('loadedmetadata', () => resolve(), { once: true });
-    video.addEventListener('error', () => reject(new Error('Could not load the video for hand analysis')), { once: true });
+    video.addEventListener('error', () => reject(new Error('Khong tai duoc video de phan tich tay')), { once: true });
   });
 
   try {

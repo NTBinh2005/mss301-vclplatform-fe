@@ -30,7 +30,7 @@ export function useLoad<T>(fn: () => Promise<T>): Loaded<T> {
         if (my !== seq.current) return;
         const status = isAxiosError(err) ? err.response?.status : undefined;
         setMissing(status === 404 || status === 502 || status === 503);
-        setError(apiErrorMessage(err, 'Could not load this section.'));
+        setError(apiErrorMessage(err, 'Không tải được mục này.'));
       })
       .finally(() => { if (my === seq.current) setLoading(false); });
   }, []);
@@ -42,8 +42,8 @@ export function useLoad<T>(fn: () => Promise<T>): Loaded<T> {
 export function Unavailable({ endpoint, service }: { endpoint: string; service: string }) {
   return (
     <div className="unavailable">
-      <strong>Not available yet.</strong> This screen calls <code>{endpoint}</code> on <code>{service}</code>, which the
-      API gateway did not answer. It will start working once that service exposes the route.
+      <strong>Chưa sẵn sàng.</strong> Màn hình này gọi <code>{endpoint}</code> của <code>{service}</code> nhưng
+      API gateway không phản hồi. Màn hình sẽ hoạt động khi dịch vụ đó chạy và mở route này.
     </div>
   );
 }

@@ -95,7 +95,7 @@ export function buildJourney(categories: CategoryResponse[], signs: Sign[]): { c
         part,
         chapter: ci,
         categoryId: category.id,
-        title: inCat.length > SIGNS_PER_LESSON ? `${category.name}, part ${part}` : category.name,
+        title: inCat.length > SIGNS_PER_LESSON ? `${category.name}, phần ${part}` : category.name,
         signIds: chunk.map(s => s.id),
         minutes: chunk.length * 2 + 1,
       };

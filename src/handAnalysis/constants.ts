@@ -13,13 +13,13 @@ export const FINGER_JOINTS: Record<string, [number, number, number]> = {
 
 export const FINGER_ORDER = ['thumb', 'index', 'middle', 'ring', 'pinky'] as const;
 
-// Finger names shown to the learner.
-export const FINGER_LABELS: Record<string, string> = {
-  thumb:  'thumb',
-  index:  'index finger',
-  middle: 'middle finger',
-  ring:   'ring finger',
-  pinky:  'little finger',
+// Nhan tieng Viet co dau cho tung ngon (hien cho nguoi dung).
+export const FINGER_LABELS_VI: Record<string, string> = {
+  thumb:  'ngón cái',
+  index:  'ngón trỏ',
+  middle: 'ngón giữa',
+  ring:   'ngón áp út',
+  pinky:  'ngón út',
 };
 
 // Diem MCP cua ngon tro va ngon ut - dung dung mat phang long ban tay.
@@ -63,11 +63,11 @@ export const SAMPLE_FRAMES = 24;
 // LUU Y: dau truc z (ra ngoai/vao trong) va x (trai/phai) co the bi nguoc tuy
 // he toa do; neu thuc te thay nguoc thi dao dau o classifyPalmFacing() - 1 dong.
 export type PalmFacing = 'out' | 'in' | 'up' | 'down' | 'left' | 'right';
-export const PALM_FACING: Record<PalmFacing, string> = {
-  out: 'face outward (away from you)',
-  in: 'face inward (towards you)',
-  up: 'face up',
-  down: 'face down',
-  left: 'face left',
-  right: 'face right',
+export const PALM_FACING_VI: Record<PalmFacing, string> = {
+  out: 'hướng ra ngoài (về phía trước)',
+  in: 'hướng vào trong (về phía người)',
+  up: 'hướng lên trên',
+  down: 'hướng xuống dưới',
+  left: 'hướng sang trái',
+  right: 'hướng sang phải',
 };
