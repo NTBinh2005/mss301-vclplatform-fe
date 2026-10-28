@@ -67,6 +67,7 @@ const routes = [
   ['PUT', /^\/api\/users\/me\/password$/, () => ok(null)],
   ['PATCH', /^\/api\/users\/me\/notifications$/, (b, h, url) => ok({ ...user(false), emailNotificationsEnabled: url.includes('=true') })],
   ['POST', /^\/api\/users\/me\/avatar$/, () => ok(user(false))],
+  ['PUT', /^\/api\/users\/me\/avatar$/, (b) => ok({ ...user(false), avatarUrl: b.avatarUrl })],
   ['DELETE', /^\/api\/users\/me\/avatar$/, () => ok(user(false))],
   ['DELETE', /^\/api\/users\/me$/, () => ok(null)],
   ['GET', /^\/api\/users\/search/, () => ok(page(Object.values(AUTHORS).map(({ displayName, ...u }) => u)))],
