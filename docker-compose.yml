@@ -5,12 +5,12 @@ services:
     ports:
       - "3000:80"
     # nginx proxies /api to http://api-gateway:8080, so this container must share
-    # a network with the gateway. Set the external network name below to match
-    # the one your MSS backend compose file uses.
+    # a network with the gateway: the `vsl-net` network of the backend compose
+    # project (folder mss301-vslplatform-project). Start the backend first.
     networks:
       - mss
 
 networks:
   mss:
-    name: mss-network
+    name: mss301-vslplatform-project_vsl-net
     external: true
