@@ -10,6 +10,11 @@ import { apiErrorMessage } from '../api/errors';
 import type { EvaluationResponse } from '../models';
 import { usePrefs } from '../lib/prefs';
 import type { Sign } from '../lib/signs';
+import { activeWindow, DETECT_INTERVAL_MS, loadPoseDetector, type MotionSample, SignerTracker } from '../lib/signerFraming';
+import { analyzeHands, type HandFeedback } from '../handAnalysis';
+
+// A detection slower than this, three times running, means the CPU cannot keep up: fall back to a centred crop.
+const SLOW_DETECT_MS = 1200;
 
 const RECORD_MS = 5000;
 const COUNT_FROM = 3;
@@ -65,6 +70,15 @@ export default function Studio() {
   const [failure, setFailure] = useState('');
   const [typed, setTyped] = useState('');
   const [drawn, setDrawn] = useState(false);
+  const [pose, setPose] = useState<'loading' | 'ready' | 'off'>('loading');
+  const [handFb, setHandFb] = useState<HandFeedback | null>(null);
+  const [handBusy, setHandBusy] = useState(false);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const guideRef = useRef<HTMLDivElement>(null);
+  const tracker = useRef<SignerTracker | null>(null);
+  const recording = useRef(false);
+  const samples = useRef<MotionSample[]>([]);
+  const recordStart = useRef(0);
 
   const later = (fn: () => void, ms: number) => { timers.current.push(window.setTimeout(fn, ms)); };
   const clearTimers = () => { timers.current.forEach(t => window.clearTimeout(t)); timers.current = []; };
@@ -104,33 +118,90 @@ export default function Studio() {
     return () => window.clearInterval(t);
   }, [result, reduceMotion]);
 
-  // Record an UN-mirrored centred square: the model centre-crops a square after
-  // resizing, so a square, signer-centred clip survives its preprocessing intact.
-  const record = (s: Sign) => {
-    const video = videoRef.current, canvas = canvasRef.current;
-    if (!video || !canvas || !streamRef.current) return;
-    const side = Math.min(video.videoWidth, video.videoHeight) || 480;
-    canvas.width = side; canvas.height = side;
-    const ctx = canvas.getContext('2d')!;
-    const draw = () => {
-      const vw = video.videoWidth, vh = video.videoHeight;
-      ctx.drawImage(video, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, side, side);
-      raf.current = requestAnimationFrame(draw);
+  // Load the pose model once the camera is on. Without it the Studio still works with a centred crop.
+  useEffect(() => {
+    if (cam !== 'on' || tracker.current) return;
+    let cancelled = false;
+    loadPoseDetector()
+      .then(d => { if (!cancelled) { tracker.current = new SignerTracker(d); setPose('ready'); } })
+      .catch(() => { if (!cancelled) setPose('off'); });
+    return () => { cancelled = true; };
+  }, [cam]);
+
+  // Continuously draw an UN-mirrored square of the signer onto the capture canvas.
+  // The model centre-crops a square after resizing, so a square, signer-centred
+  // clip survives its preprocessing intact. The dashed guide over the (mirrored)
+  // preview shows exactly what is being recorded.
+  useEffect(() => {
+    if (cam !== 'on') return;
+    let active = true, lastDetect = 0, slow = 0;
+    const loop = (now: number) => {
+      if (!active) return;
+      const video = videoRef.current, canvas = canvasRef.current;
+      if (video && canvas && video.readyState >= 2 && video.videoWidth > 0) {
+        const vw = video.videoWidth, vh = video.videoHeight;
+        const t = tracker.current;
+        if (t && now - lastDetect >= DETECT_INTERVAL_MS) {
+          lastDetect = now;
+          const started = performance.now();
+          try {
+            const target = t.detect(video, now);
+            if (target && recording.current) samples.current.push({ t: now, x: target.cx, y: target.cy, s: target.side });
+          } catch { /* a single failed frame is not worth stopping for */ }
+          if (performance.now() - started > SLOW_DETECT_MS) {
+            if (++slow >= 3) { tracker.current = null; setPose('off'); }
+          } else slow = 0;
+        }
+        const src = t ? t.source(vw, vh) : { sx: (vw - Math.min(vw, vh)) / 2, sy: (vh - Math.min(vw, vh)) / 2, side: Math.min(vw, vh) };
+        const out = Math.min(vw, vh);
+        if (canvas.width !== out) { canvas.width = out; canvas.height = out; }
+        canvas.getContext('2d')!.drawImage(video, src.sx, src.sy, src.side, src.side, 0, 0, out, out);
+
+        const frame = frameRef.current, guide = guideRef.current;
+        if (frame && guide) {
+          // Map video pixels onto the object-fit:cover, mirrored preview.
+          const w = frame.clientWidth, h = frame.clientHeight, scale = Math.max(w / vw, h / vh);
+          const ox = (w - vw * scale) / 2, oy = (h - vh * scale) / 2;
+          guide.style.left = `${ox + (vw - src.sx - src.side) * scale}px`;
+          guide.style.top = `${oy + src.sy * scale}px`;
+          guide.style.width = guide.style.height = `${src.side * scale}px`;
+          guide.style.opacity = t?.locked ? '1' : '0';
+        }
+      }
+      raf.current = requestAnimationFrame(loop);
     };
-    draw();
+    raf.current = requestAnimationFrame(loop);
+    return () => { active = false; if (raf.current) cancelAnimationFrame(raf.current); };
+  }, [cam]);
+
+  const record = (s: Sign) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !streamRef.current) return;
 
     const mimeType = pickMime();
     const recorder = new MediaRecorder(canvas.captureStream(30), mimeType ? { mimeType } : undefined);
     const chunks: BlobPart[] = [];
     recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
     recorder.onstop = async () => {
-      if (raf.current) cancelAnimationFrame(raf.current);
+      recording.current = false;
+      const { startFrac, endFrac } = activeWindow(samples.current, recordStart.current, performance.now());
       setPhase('analyzing');
       ANALYZE_STEPS.forEach((step, i) => later(() => setLabel(step), i * 900));
       const type = recorder.mimeType || 'video/webm';
-      const file = new File([new Blob(chunks, { type })], `practice.${type.includes('mp4') ? 'mp4' : 'webm'}`, { type });
+      const blob = new Blob(chunks, { type });
+      const file = new File([blob], `practice.${type.includes('mp4') ? 'mp4' : 'webm'}`, { type });
+
+      // Hand-shape notes run in the browser alongside the AI score and never block it.
+      if (s.expectedId != null && pose !== 'off') {
+        setHandBusy(true);
+        analyzeHands({ clipBlob: blob, classId: s.expectedId, sampleVideoUrl: s.videoUrl || undefined })
+          .then(setHandFb)
+          .catch(() => setHandFb(null))
+          .finally(() => setHandBusy(false));
+      }
+
       try {
-        const res = await practiceApi.evaluate(file, s.expectedId!);
+        const res = await practiceApi.evaluate(file, s.id, startFrac, endFrac);
         clearTimers();
         setResult(res);
         setPhase('result');
@@ -144,6 +215,9 @@ export default function Studio() {
         setLabel('Mirror view · guide on');
       }
     };
+    samples.current = [];
+    recordStart.current = performance.now();
+    recording.current = true;
     recorder.start();
     setPhase('recording');
     setLabel('Recording — sign it now');
@@ -152,7 +226,7 @@ export default function Studio() {
 
   const attempt = () => {
     if (!sign || cam !== 'on' || phase === 'countdown' || phase === 'recording' || phase === 'analyzing') return;
-    setResult(null); setFailure(''); setDrawn(false);
+    setResult(null); setFailure(''); setDrawn(false); setHandFb(null);
     setPhase('countdown');
     setLabel('Get ready…');
     setCount(COUNT_FROM);
@@ -162,7 +236,7 @@ export default function Studio() {
 
   const choose = (i: number) => {
     if (phase === 'countdown' || phase === 'recording' || phase === 'analyzing') return;
-    setIdx(i); setPhase('idle'); setResult(null); setFailure('');
+    setIdx(i); setPhase('idle'); setResult(null); setFailure(''); setHandFb(null);
     if (requested && set[i]?.id !== requested) setParams({}, { replace: true });
   };
 
@@ -199,9 +273,10 @@ export default function Studio() {
 
         <div className="studio-grid">
           <div>
-            <div className="cam-frame">
+            <div className="cam-frame" ref={frameRef}>
               <video ref={videoRef} autoPlay playsInline muted />
               <canvas ref={canvasRef} className="hidden-capture" aria-hidden="true" />
+              <div ref={guideRef} className="cam-guide" aria-hidden="true" />
               {cam === 'on' && phase !== 'analyzing' && (
                 <div className="cam-ghost" style={{ color: 'var(--paper)' }}><Hand frame={ghostFrame} size={170} ghost /></div>
               )}
@@ -232,7 +307,11 @@ export default function Studio() {
                 <span>{label}</span>
               </div>
             </div>
-            <p className="stage-caption">Match the ghost: same shape, same path, same pace. Stand back so both arms fit.</p>
+            <p className="stage-caption">
+              Match the ghost: same shape, same path, same pace. Stand back so both arms fit.
+              {cam === 'on' && (pose === 'ready' ? ' The dashed square follows you — that is what gets scored.'
+                : pose === 'loading' ? ' Loading signer tracking…' : ' Signer tracking is off on this device; the centre of the frame is scored.')}
+            </p>
           </div>
 
           <div>
@@ -289,6 +368,7 @@ export default function Studio() {
                     {VERDICT[result.status]} — <span style={{ color: 'rgba(246,240,228,.65)' }}>{sign.word}</span>
                   </p>
                   <div className="coachnote"><span className="kicker">Mentor notes</span><span>{typed}</span></div>
+                  <HandNotes feedback={handFb} busy={handBusy} />
                   <div className="studio-actions">
                     <button className="btn cream" onClick={attempt}><Icon name="refresh" size={16} /> Try again</button>
                     {set.length > 1 && (
@@ -314,5 +394,23 @@ export default function Studio() {
         </div>
       </div>
     </section>
+  );
+}
+
+/* Hand-shape notes computed in the browser from MediaPipe hand landmarks
+   (finger curl/spread, thumb, palm direction), compared with the tutorial video. */
+function HandNotes({ feedback, busy }: { feedback: HandFeedback | null; busy: boolean }) {
+  if (busy) return <div className="hand-fb"><span className="spin" style={{ width: 12, height: 12 }} /> Reading your handshape…</div>;
+  if (!feedback) return null;
+  if (!feedback.available) return <div className="hand-fb"><span className="kicker">Handshape</span><p style={{ marginTop: 6 }}>{feedback.note}</p></div>;
+  return (
+    <div className="hand-fb">
+      <span className="kicker">Handshape · from your hand landmarks</span>
+      <div className="scores">
+        <span><b>{feedback.handShapeScore}%</b> finger shape</span>
+        <span><b>{feedback.palmScore}%</b> palm direction</span>
+      </div>
+      <ul>{feedback.comments.map((c, i) => <li key={i} className={c.severity}>{c.text}</li>)}</ul>
+    </div>
   );
 }
