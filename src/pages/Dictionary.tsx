@@ -106,7 +106,7 @@ export default function Dictionary() {
                 <div className="drow-body">
                   {isOpen && (
                     <div className="drow-body-in">
-                      <div style={{ width: 'min(260px, 100%)' }}><SignMedia sign={sg} size={150} /></div>
+                      <div style={{ width: 260, maxWidth: '100%' }}><SignMedia sign={sg} size={150} /></div>
                       <div>
                         <div className="transcript"><h4>Cách ký</h4><p>{sg.description || 'Chưa có mô tả — hãy làm theo video minh họa.'}</p></div>
                         {sg.lastAttemptedAt && <p className="notation">Luyện lần cuối {timeAgo(sg.lastAttemptedAt)}</p>}
