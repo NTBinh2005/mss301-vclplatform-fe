@@ -2,7 +2,7 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Icon from '../components/Icon';
 import PostView from '../components/PostView';
-import { Alert, Avatar, EmptyState, Loading, Spinner } from '../components/common';
+import { Alert, ArtBanner, Avatar, EmptyState, Loading, Spinner } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useLearning } from '../context/LearningContext';
 import { useUI } from '../context/UIContext';
@@ -14,23 +14,26 @@ import { excerpt, nameOf, notificationText, postBody, timeAgo } from '../lib/for
 export function CommunityHeader({ tab }: { tab: 'room' | 'mine' }) {
   const navigate = useNavigate();
   return (
-    <>
-      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <div>
-          <p className="kicker">Cộng đồng</p>
-          <h1 className="display sm">{tab === 'room' ? <>Học là một cuộc <em>trò chuyện</em>.</> : <>Bài viết <em>của bạn</em>.</>}</h1>
+    <div className="page-banner">
+      <div className="page-banner-copy">
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <p className="kicker">Cộng đồng</p>
+            <h1 className="display sm">{tab === 'room' ? <>Học là một cuộc <em>trò chuyện</em>.</> : <>Bài viết <em>của bạn</em>.</>}</h1>
+          </div>
+          <div className="seg" role="tablist">
+            <button role="tab" aria-selected={tab === 'room'} className={tab === 'room' ? 'on' : ''} onClick={() => navigate('/community')}>Cộng đồng</button>
+            <button role="tab" aria-selected={tab === 'mine'} className={tab === 'mine' ? 'on' : ''} onClick={() => navigate('/community/mine')}>Bài của tôi</button>
+          </div>
         </div>
-        <div className="seg" role="tablist">
-          <button role="tab" aria-selected={tab === 'room'} className={tab === 'room' ? 'on' : ''} onClick={() => navigate('/community')}>Cộng đồng</button>
-          <button role="tab" aria-selected={tab === 'mine'} className={tab === 'mine' ? 'on' : ''} onClick={() => navigate('/community/mine')}>Bài của tôi</button>
-        </div>
+        <p className="lede">
+          {tab === 'room'
+            ? 'Mẹo luyện tập từ những người đi trước bạn một chương, văn hóa Điếc từ chính người trong cuộc, và những cột mốc truyền cảm hứng.'
+            : 'Bản nháp chỉ mình bạn thấy cho tới khi đăng. Bài bị quản trị viên gỡ sẽ hiện lý do tại đây.'}
+        </p>
       </div>
-      <p className="lede">
-        {tab === 'room'
-          ? 'Mẹo luyện tập từ những người đi trước bạn một chương, văn hóa Điếc từ chính người trong cuộc, và những cột mốc truyền cảm hứng.'
-          : 'Bản nháp chỉ mình bạn thấy cho tới khi đăng. Bài bị quản trị viên gỡ sẽ hiện lý do tại đây.'}
-      </p>
-    </>
+      <ArtBanner variant="community" />
+    </div>
   );
 }
 
@@ -192,6 +195,9 @@ export default function Community() {
         <aside>
           {challenge && (
             <div className="challenge">
+              <div className="challenge-photo" aria-hidden="true">
+                <img src="/banners/challenge-banner.jpg" alt="" />
+              </div>
               <span className="tagchip">Thử thách tuần</span>
               <h3>Ký “{challenge.word}” và chia sẻ</h3>
               <p>Chấm điểm trong Phòng tập, rồi đăng bài kể lại — chỗ nào ổn, chỗ nào chưa.</p>

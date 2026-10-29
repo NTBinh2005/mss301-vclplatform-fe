@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { Hand, SignPlayer } from '../components/Hand';
 import ReviewSession from '../components/ReviewSession';
-import { Alert, EmptyState, Loading, SignMedia, SignThumb } from '../components/common';
+import { Alert, ArtBanner, EmptyState, Loading, SignMedia, SignThumb } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useLearning } from '../context/LearningContext';
 import { useUI } from '../context/UIContext';
@@ -59,6 +59,7 @@ export default function Today() {
               : 'Hôm nay không có gì cần ôn. Học thêm điều mới bên dưới nhé.'}
           </p>
         </div>
+        <ArtBanner variant="today" knownCount={known} dueCount={L.due.length} />
       </div>
 
       <section className="streak-card" aria-label="Chuỗi ngày học">
@@ -88,9 +89,10 @@ export default function Today() {
           )}
           <div className="goal-bar" aria-label={`Mục tiêu ngày ${L.activityToday}/${goal}`}>
             <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-              <span className="kicker">Mục tiêu ngày</span><span className="faint" style={{ fontSize: 12.5 }}>{Math.min(L.activityToday, goal)}/{goal}</span>
+              <span className="kicker"><Icon name="target" size={12} /> Mục tiêu ngày</span>
+              <span className="faint" style={{ fontSize: 12.5, fontWeight: 600 }}>{Math.min(L.activityToday, goal)}/{goal}</span>
             </div>
-            <div className="skill-track"><div className="skill-fill" style={{ width: drawn ? `${goalPct}%` : 0, background: goalPct >= 100 ? 'var(--mentor)' : undefined }} /></div>
+            <div className="skill-track"><div className="skill-fill" style={{ width: drawn ? `${goalPct}%` : 0, background: goalPct >= 100 ? 'var(--success)' : undefined }} /></div>
           </div>
           {!safeToday && <button className="btn btn-lacquer btn-sm" onClick={() => navigate('/studio')}><Icon name="video" size={15} /> Luyện ngay</button>}
         </div>
@@ -103,7 +105,10 @@ export default function Today() {
             <article className="feature-lesson">
               <SignMedia sign={featured} size={190} autoplay={!reduceMotion} />
               <div>
-                <p className="kicker">Bài {next.n} · {L.chapters[next.chapter].category.name}</p>
+                <div className="row" style={{ gap: 8, marginBottom: 6 }}>
+                  <span className="pill lacquer">Bài {next.n}</span>
+                  <span className="kicker">{L.chapters[next.chapter].category.name}</span>
+                </div>
                 <h3 className="feature-title">{next.title}</h3>
                 <p className="feature-sub">{next.signIds.map(id => L.signById.get(id)?.word).join(' · ')} — khoảng {next.minutes} phút</p>
                 <Link className="btn btn-lacquer" to={`/lesson/${next.id}`}><Icon name="play" size={16} /> Học tiếp bài này</Link>
@@ -149,8 +154,8 @@ export default function Today() {
           </section>
 
           {sod && (
-            <section className="rail-block">
-              <h2 className="rail-title">Ký hiệu của ngày</h2>
+            <section className="rail-block rail-card">
+              <h2 className="rail-title"><Icon name="sparkles" size={17} /> Ký hiệu của ngày</h2>
               <div className="sod">
                 <span className="sod-media">
                   {sod.imageUrl ? <SignThumb sign={sod} size={110} /> : <SignPlayer frames={sod.frames} size={96} autoplay={!reduceMotion} chrome={false} />}
@@ -167,8 +172,8 @@ export default function Today() {
             </section>
           )}
 
-          <section className="rail-block">
-            <h2 className="rail-title">Từ cộng đồng</h2>
+          <section className="rail-block rail-card">
+            <h2 className="rail-title"><Icon name="users" size={17} /> Từ cộng đồng</h2>
             {post ? (
               <Link className="pulse-item" to={`/community?post=${post.id}`}><span className="kicker">{nameOf(post.author)} · {post.likeCount} lượt thích</span><strong>{post.title}</strong></Link>
             ) : (

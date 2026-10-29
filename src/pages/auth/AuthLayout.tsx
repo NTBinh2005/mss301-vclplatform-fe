@@ -1,19 +1,33 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import Icon from '../../components/Icon';
 import { Hand } from '../../components/Hand';
-import { Brand } from '../../components/common';
+import { Brand, ThemePicker, ArtBanner } from '../../components/common';
 
 export function AuthLayout({ quote, children }: { quote: ReactNode; children: ReactNode }) {
   return (
     <div className="auth">
       <aside className="auth-art">
-        <Brand />
+        <div className="row" style={{ justifyContent: 'space-between', position: 'relative', zIndex: 2 }}>
+          <Brand />
+          <ThemePicker />
+        </div>
         <span className="hero-hand" aria-hidden="true"><Hand frame={{ shape: 'open', rot: 10 }} size={520} /></span>
-        <blockquote>{quote}</blockquote>
+        <ArtBanner variant="auth" />
+        <div className="auth-art-bottom">
+          <div className="auth-perks" aria-hidden="true">
+            <span className="pill"><Icon name="video" size={12} /> Video người ký thật</span>
+            <span className="pill mentor"><Icon name="sparkles" size={12} /> Chấm điểm AI tức thì</span>
+            <span className="pill lacquer"><Icon name="flame" size={12} /> Lộ trình 5 phút/ngày</span>
+          </div>
+          <blockquote>{quote}</blockquote>
+        </div>
       </aside>
       <main className="auth-main" id="app">
         <div className="auth-card">
-          <div className="auth-mobile-brand"><Brand /></div>
+          <div className="auth-mobile-brand">
+            <Brand />
+            <ThemePicker />
+          </div>
           {children}
         </div>
       </main>
@@ -34,7 +48,7 @@ export function Field({ label, error, hint, aside, children }: FieldProps) {
     <div className={`field ${error ? 'invalid' : ''}`}>
       <div className="row" style={{ justifyContent: 'space-between' }}><span className="label">{label}</span>{aside}</div>
       {children}
-      {error ? <span className="err">{error}</span> : hint ? <span className="hint">{hint}</span> : null}
+      {error ? <span className="err"><Icon name="alert" size={13} /> {error}</span> : hint ? <span className="hint">{hint}</span> : null}
     </div>
   );
 }

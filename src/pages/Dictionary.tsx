@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Icon from '../components/Icon';
 import ReviewSession from '../components/ReviewSession';
-import { Alert, EmptyState, Loading, SignMedia, SignThumb, StatusTag } from '../components/common';
+import { Alert, ArtBanner, EmptyState, Loading, SignMedia, SignThumb, StatusTag } from '../components/common';
 import { useLearning } from '../context/LearningContext';
 import { useUI } from '../context/UIContext';
 import { timeAgo } from '../lib/format';
@@ -48,9 +48,14 @@ export default function Dictionary() {
   return (
     <section className="view">
       {L.error && <div style={{ marginBottom: 20 }}><Alert>{L.error}</Alert></div>}
-      <p className="kicker">{L.signs.length} ký hiệu · bạn đã tập {known}</p>
-      <h1 className="display sm"><em>Từ điển</em> ký hiệu</h1>
-      <p className="lede">Mỗi ký hiệu là một hình dạng tay, một chuyển động và một ngữ cảnh. Mở một mục để xem; rê chuột lên bàn tay để thấy nó chuyển động.</p>
+      <div className="page-banner">
+        <div className="page-banner-copy">
+          <p className="kicker">{L.signs.length} ký hiệu · bạn đã tập {known}</p>
+          <h1 className="display sm"><em>Từ điển</em> ký hiệu</h1>
+          <p className="lede">Mỗi ký hiệu là một hình dạng tay, một chuyển động và một ngữ cảnh. Mở một mục để xem; rê chuột lên bàn tay để thấy nó chuyển động.</p>
+        </div>
+        <ArtBanner variant="dictionary" />
+      </div>
 
       <div className="dict-tools">
         <label className="dict-search">

@@ -91,7 +91,7 @@ export default function Profile() {
 
   return (
     <section className="view">
-      <div className="prof-head">
+      <div className="prof-head has-cover"><div className="prof-cover" aria-hidden="true"><img src="/banners/profile-cover.jpg" alt="" /><div className="prof-cover-scrim" /></div>
         <span className="prof-hand" aria-hidden="true"><Hand frame={{ shape: 'flat', rot: -6 }} size={300} /></span>
         <div className="prof-avatar">
           {user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initials(user.fullName)}
