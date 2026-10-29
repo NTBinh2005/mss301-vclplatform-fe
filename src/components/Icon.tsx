@@ -39,6 +39,14 @@ const PATHS = {
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   flame: '<path d="M12 21c-4 0-6.5-2.6-6.5-6 0-3.3 2.4-5.4 3.6-8 .9 1.6 1.7 2.5 3.1 3 0-2.6 1-5.2 3.3-7 0 4 4.5 6.3 4.5 12 0 3.4-3 6-8 6z"/>',
   inbox: '<path d="M3 13h5l2 3h4l2-3h5M5 5h14l2 8v6H3v-6z"/>',
+  sparkles: '<path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4zM5 16l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8zM19 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
+  trophy: '<path d="M6 9H4a2 2 0 0 1-2-2V5h4M18 9h2a2 2 0 0 0 2-2V5h-4M6 4h12v5a6 6 0 0 1-12 0zM12 15v5M8 20h8"/>',
+  compass: '<circle cx="12" cy="12" r="9"/><polygon points="15.5 8.5 13.5 13.5 8.5 15.5 10.5 10.5 15.5 8.5"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+  zap: '<polygon points="13 2 4 14 12 14 11 22 20 10 12 10 13 2"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/>',
+  layers: '<polygon points="12 3 2 8 12 13 22 8 12 3"/><path d="m2 13 10 5 10-5M2 17.5l10 4.5 10-4.5"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;

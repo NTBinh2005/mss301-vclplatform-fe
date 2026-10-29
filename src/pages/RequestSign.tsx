@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Icon from '../components/Icon';
-import { Alert, EmptyState, Spinner } from '../components/common';
+import { Alert, ArtBanner, EmptyState, Spinner } from '../components/common';
 import { useLearning } from '../context/LearningContext';
 import { useUI } from '../context/UIContext';
 import { suggestionApi } from '../services';
@@ -79,9 +79,14 @@ export default function RequestSign() {
   return (
     <section className="view">
       <Link className="textlink" to="/dictionary"><Icon name="arrowl" size={15} /> Từ điển</Link>
-      <p className="kicker" style={{ marginTop: 18 }}>Mở rộng từ điển</p>
-      <h1 className="display sm">Đề xuất <em>ký hiệu</em>.</h1>
-      <p className="lede">Thiếu từ bạn cần? Hãy cho chúng tôi biết, đội ngũ sẽ quay video hướng dẫn và nối nó với mô hình AI.</p>
+      <div className="page-banner" style={{ marginTop: 14 }}>
+        <div className="page-banner-copy">
+          <p className="kicker">Mở rộng từ điển</p>
+          <h1 className="display sm">Đề xuất <em>ký hiệu</em>.</h1>
+          <p className="lede">Thiếu từ bạn cần? Hãy cho chúng tôi biết, đội ngũ sẽ quay video hướng dẫn và nối nó với mô hình AI.</p>
+        </div>
+        <ArtBanner variant="request" />
+      </div>
 
       <div className="two-col" style={{ marginTop: 26 }}>
         <form onSubmit={submit} noValidate>

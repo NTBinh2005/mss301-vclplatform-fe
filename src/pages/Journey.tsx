@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
-import { Alert, EmptyState, Loading } from '../components/common';
+import { Alert, ArtBanner, EmptyState, Loading } from '../components/common';
 import { useLearning } from '../context/LearningContext';
 import { useUI } from '../context/UIContext';
 
@@ -17,23 +17,28 @@ export default function Journey() {
   return (
     <section className="view">
       {L.error && <div style={{ marginBottom: 20 }}><Alert>{L.error}</Alert></div>}
-      <p className="kicker">Lộ trình của bạn</p>
-      <h1 className="display sm">
-        {chaptersDone === 0 ? <>Ai cũng bắt đầu<br /><em>từ đâu đó</em>.</>
-          : left ? <>Xong {chaptersDone} chương,<br /><em>còn {left} chương</em>.</>
-          : <>Hoàn thành mọi chương —<br /><em>lộ trình là của bạn</em>.</>}
-      </h1>
-      <p className="lede">
-        Bạn đã học xong <strong>{done}/{L.lessons.length} bài</strong>. Mỗi chương là một chủ đề; mỗi bài gồm ba ký hiệu
-        để xem, tự kiểm tra, rồi mang vào Phòng tập.
-      </p>
-      {L.lessons.length > 0 && (
-        <div className="journey-prog" aria-label={`Đã hoàn thành ${pct}% lộ trình`}>
-          <div className="skill-track"><div className="skill-fill" style={{ width: `${pct}%` }} /></div>
-          <span>{pct}%</span>
-          {L.nextLesson && <Link className="btn btn-lacquer btn-sm" to={`/lesson/${L.nextLesson.id}`}><Icon name="play" size={14} /> Bài {L.nextLesson.n}</Link>}
+      <div className="page-banner">
+        <div className="page-banner-copy">
+          <p className="kicker">Lộ trình của bạn</p>
+          <h1 className="display sm">
+            {chaptersDone === 0 ? <>Ai cũng bắt đầu<br /><em>từ đâu đó</em>.</>
+              : left ? <>Xong {chaptersDone} chương,<br /><em>còn {left} chương</em>.</>
+              : <>Hoàn thành mọi chương —<br /><em>lộ trình là của bạn</em>.</>}
+          </h1>
+          <p className="lede">
+            Bạn đã học xong <strong>{done}/{L.lessons.length} bài</strong>. Mỗi chương là một chủ đề; mỗi bài gồm ba ký hiệu
+            để xem, tự kiểm tra, rồi mang vào Phòng tập.
+          </p>
+          {L.lessons.length > 0 && (
+            <div className="journey-prog" aria-label={`Đã hoàn thành ${pct}% lộ trình`}>
+              <div className="skill-track"><div className="skill-fill" style={{ width: `${pct}%` }} /></div>
+              <span>{pct}%</span>
+              {L.nextLesson && <Link className="btn btn-lacquer btn-sm" to={`/lesson/${L.nextLesson.id}`}><Icon name="play" size={14} /> Bài {L.nextLesson.n}</Link>}
+            </div>
+          )}
         </div>
-      )}
+        <ArtBanner variant="journey" />
+      </div>
 
       {L.chapters.length === 0 && <EmptyState title="Chưa có chương nào" body="Quản trị viên cần thêm chủ đề và ký hiệu trước khi bắt đầu lộ trình." />}
 

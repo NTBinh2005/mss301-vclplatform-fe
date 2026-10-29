@@ -266,7 +266,7 @@ export default function Studio() {
             <p className="kicker">Phòng tập AI</p>
             <h1 className="display sm" style={{ color: 'var(--paper)' }}>Tập dượt trong <em style={{ color: 'var(--lacquer)' }}>phòng tối</em>.</h1>
           </div>
-          <p style={{ color: 'rgba(246,240,228,.55)', fontSize: 13.5, maxWidth: '36ch' }}>
+          <p style={{ color: 'rgba(246,240,228,.65)', fontSize: 13.5, maxWidth: '38ch' }}>
             Ký trong năm giây sau khi đếm ngược. Chỉ đoạn clip bạn quay mới được gửi đi chấm — hình xem trực tiếp không rời khỏi máy bạn.
           </p>
         </div>
@@ -314,10 +314,10 @@ export default function Studio() {
             </p>
           </div>
 
-          <div>
+          <div className="studio-panel">
             <p className="kicker">Đang luyện{set.length > 1 ? ` · ${set.findIndex(s => s.id === sign.id) + 1}/${set.length}` : ''}</p>
-            <h2 style={{ fontFamily: 'var(--fd)', fontSize: 30, fontWeight: 600 }}>{sign.word}</h2>
-            <p className="notation" style={{ color: 'rgba(246,240,228,.6)' }}>{sign.categoryName}{sign.description ? ` · ${sign.description}` : ''}</p>
+            <h2 style={{ fontFamily: 'var(--fd)', fontSize: 32, fontWeight: 600 }}>{sign.word}</h2>
+            <p className="notation" style={{ color: 'rgba(246,240,228,.65)' }}>{sign.categoryName}{sign.description ? ` · ${sign.description}` : ''}</p>
             <div className="set-row">
               {set.map((s, i) => (
                 <button key={s.id} className={`set-chip ${s.id === sign.id ? 'on' : ''}`} disabled={busy} onClick={() => choose(i)}>{s.word}</button>
@@ -349,25 +349,25 @@ export default function Studio() {
 
               {phase === 'result' && result && (
                 <>
-                  <div className="attempt-row">
-                    <div className="dial" role="img" aria-label={`Độ tin cậy ${score}/100, ${VERDICT[result.status]}`}>
+                  <div className={`attempt-row verdict-${result.status}`}>
+                    <div className={`dial verdict-${result.status}`} role="img" aria-label={`Độ tin cậy ${score}/100, ${VERDICT[result.status]}`}>
                       <svg width="120" height="120" viewBox="0 0 120 120">
-                        <circle cx="60" cy="60" r="50" fill="none" stroke="var(--studio-line)" strokeWidth="7" />
-                        <circle className="dial-arc" cx="60" cy="60" r="50" fill="none" strokeWidth="7" strokeDasharray={C}
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="var(--studio-line)" strokeWidth="8" />
+                        <circle className="dial-arc" cx="60" cy="60" r="50" fill="none" strokeWidth="8" strokeDasharray={C}
                           strokeDashoffset={drawn ? C * (1 - score / 100) : C} />
                       </svg>
                       <span className="dial-num">{score}</span>
                     </div>
                     <div className="facts">
-                      <div className="fact"><span>Kết quả</span><b>{VERDICT[result.status]}</b></div>
+                      <div className="fact"><span>Kết quả</span><b className={`verdict-text verdict-${result.status}`}>{VERDICT[result.status]}</b></div>
                       <div className="fact"><span>Độ tin cậy</span><b>{result.confidence.toFixed(1)}%</b></div>
                       <div className="fact"><span>Hạng trong các dự đoán</span><b>#{result.rank}</b></div>
                     </div>
                   </div>
-                  <p style={{ fontFamily: 'var(--fd)', fontStyle: 'italic', fontSize: 19, marginTop: 16 }}>
+                  <p className="verdict-headline" style={{ fontFamily: 'var(--fd)', fontStyle: 'italic', fontSize: 19, marginTop: 16 }}>
                     {VERDICT[result.status]} — <span style={{ color: 'rgba(246,240,228,.65)' }}>{sign.word}</span>
                   </p>
-                  <div className="coachnote"><span className="kicker">Nhận xét</span><span>{typed}</span></div>
+                  <div className={`coachnote verdict-${result.status}`}><span className="kicker">Nhận xét từ AI</span><span>{typed}</span></div>
                   <HandNotes feedback={handFb} busy={handBusy} />
                   <div className="studio-actions">
                     <button className="btn cream" onClick={attempt}><Icon name="refresh" size={16} /> Thử lại</button>
@@ -388,7 +388,7 @@ export default function Studio() {
                   {a.confidence != null ? Math.round(a.confidence) : a.isCorrect ? '✓' : '·'}
                   <span>{a.word.split(' ')[0].slice(0, 6)}</span>
                 </span>
-              )) : <span style={{ fontSize: 13, color: 'rgba(246,240,228,.5)' }}>Chưa có lượt tập nào — thử ngay lượt đầu tiên.</span>}
+              )) : <span style={{ fontSize: 13, color: 'rgba(246,240,228,.55)' }}>Chưa có lượt tập nào — thử ngay lượt đầu tiên.</span>}
             </div>
           </div>
         </div>
