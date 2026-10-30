@@ -1,6 +1,6 @@
 import { formData, http } from '../api/client';
 import type {
-  AchievementResponse, ApiResponse, AttemptResponse, CategoryRequest, CategoryResponse,
+  AchievementResponse, ApiResponse, AssistantMessage, AssistantReply, AttemptResponse, CategoryRequest, CategoryResponse,
   EvaluationResponse, PageResponse, PracticeStatsResponse, UserProgressResponse,
   VocabularyRequest, VocabularyResponse,
 } from '../models';
@@ -68,4 +68,11 @@ export const attemptApi = {
   mine: (page = 0, size = 20) =>
     unwrap(http.get<ApiResponse<PageResponse<AttemptResponse>>>(`/attempts?${q({ page, size })}`)),
   recent: (limit = 5) => unwrap(http.get<ApiResponse<AttemptResponse[]>>(`/attempts/recent?${q({ limit })}`)),
+};
+
+/* =====================  ai-service: trợ lý học tập  ===================== */
+export const assistantApi = {
+  // Gemini có thể phải thử model dự phòng nên cho tới 60s.
+  chat: (messages: AssistantMessage[]) =>
+    unwrap(http.post<ApiResponse<AssistantReply>>('/ai/assistant/chat', { messages }, { timeout: 60000 })),
 };
