@@ -85,3 +85,24 @@ export interface VocabularyRequest {
   description?: string;
   expectedId?: number;
 }
+
+/* ---- Trợ lý học tập (ai-service POST /api/ai/assistant/chat) ---- */
+export interface AssistantMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+/** VOCABULARY: id = vocabularyId · CATEGORY: id = categoryId. Backend chỉ trả id có thật. */
+export interface AssistantCard {
+  type: 'VOCABULARY' | 'CATEGORY';
+  id: number;
+  title: string;
+  subtitle: string;
+  imageUrl: string | null;
+  practicable: boolean;
+}
+
+export interface AssistantReply {
+  reply: string;
+  cards: AssistantCard[];
+}

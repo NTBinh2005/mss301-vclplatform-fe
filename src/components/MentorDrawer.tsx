@@ -9,11 +9,20 @@ import { useUI } from '../context/UIContext';
 import { firstName } from '../lib/format';
 import { usePrefs } from '../lib/prefs';
 import type { Sign } from '../lib/signs';
+import { apiErrorCode, apiErrorMessage } from '../api/errors';
+import type { AssistantCard, AssistantMessage } from '../models';
+import { assistantApi } from '../services';
 
-/* Mentor is a rule-based coach that reads the learner's real progress. The
-   backend has no chat endpoint yet; swap `reply()` for an API call when it does. */
+/* Mentor hỏi trợ lý AI (ai-service: Gemini + dữ liệu học thật của learning-service). Gemini tắt / lỗi thì
+   quay về bộ trả lời theo luật bên dưới (`reply()`), đọc tiến độ đã có sẵn trên máy. */
 
-interface Msg { id: number; me: boolean; body: ReactNode; action?: { label: string; run: () => void } }
+const QUICK_QUESTIONS = ['Tiến độ của mình thế nào?', 'Mình nên học gì tiếp?', 'Hệ thống có bao nhiêu bài?'];
+
+interface Msg {
+  id: number; me: boolean; body: ReactNode;
+  action?: { label: string; run: () => void };
+  cards?: AssistantCard[];
+}
 
 export default function MentorDrawer({ ask }: { ask?: string }) {
   const { user } = useAuth();
@@ -27,8 +36,10 @@ export default function MentorDrawer({ ask }: { ask?: string }) {
   const seq = useRef(0);
   const box = useRef<HTMLDivElement>(null);
   const asked = useRef(false);
+  // Lịch sử gửi cho trợ lý (backend không lưu); chỉ gồm câu hỏi và câu trả lời của AI.
+  const transcript = useRef<AssistantMessage[]>([]);
 
-  const { due, nextLesson, stats, signs, activityToday } = learning;
+  const { due, nextLesson, stats, signs, activityToday, lessons, stateOf } = learning;
   const streak = stats?.currentStreak ?? 0;
 
   const go = (path: string) => () => { ui.closeLayer(); navigate(path); };
@@ -88,10 +99,34 @@ export default function MentorDrawer({ ask }: { ask?: string }) {
     }
   };
 
-  const send = (q: string) => {
+  // Thẻ từ vựng: luyện được thì mở Phòng tập, chưa thì tra Từ điển. Thẻ chủ đề: mở bài đang học dở của chủ đề đó.
+  const openCard = (c: AssistantCard) => {
+    if (c.type === 'VOCABULARY') {
+      return go(c.practicable ? `/studio?sign=${c.id}` : `/dictionary?q=${encodeURIComponent(c.title)}`)();
+    }
+    const inCat = lessons.filter(l => l.categoryId === c.id);
+    const lesson = inCat.find(l => stateOf(l) === 'current') || inCat.find(l => stateOf(l) !== 'locked');
+    go(lesson ? `/lesson/${lesson.id}` : '/learn')();
+  };
+
+  const send = async (q: string) => {
     push({ me: true, body: q });
     setTyping(true);
-    window.setTimeout(() => { setTyping(false); reply(q); }, reduceMotion ? 200 : 900);
+    transcript.current = [...transcript.current, { role: 'user', content: q }];
+    try {
+      const res = await assistantApi.chat(transcript.current.slice(-10));
+      transcript.current = [...transcript.current, { role: 'assistant', content: res.reply }];
+      push({ me: false, body: <span className="msg-text">{res.reply}</span>, cards: res.cards });
+    } catch (err) {
+      if (apiErrorCode(err) === 'AI_3010') {
+        push({ me: false, body: apiErrorMessage(err, 'Bạn hỏi hơi nhanh, chờ một chút nhé.') });
+      } else {
+        await new Promise(r => window.setTimeout(r, reduceMotion ? 0 : 300));
+        reply(q);
+      }
+    } finally {
+      setTyping(false);
+    }
   };
 
   useEffect(() => {
@@ -119,13 +154,32 @@ export default function MentorDrawer({ ask }: { ask?: string }) {
         {msgs.map(m => (
           <div key={m.id} className={`msg ${m.me ? 'me' : 'bot'}`}>
             {m.body}
+            {m.cards?.length ? (
+              <div className="mentor-cards">
+                {m.cards.map(c => (
+                  <button key={`${c.type}-${c.id}`} type="button" className="mentor-card" onClick={() => openCard(c)}
+                    aria-label={c.type === 'VOCABULARY' ? `Mở ký hiệu “${c.title}”` : `Mở chủ đề “${c.title}”`}>
+                    {c.imageUrl
+                      ? <img src={c.imageUrl} alt="" loading="lazy" />
+                      : <span className="mentor-card-ic"><Icon name={c.type === 'VOCABULARY' ? 'video' : 'book'} size={18} /></span>}
+                    <span className="mentor-card-txt"><strong>{c.title}</strong><small>{c.subtitle}</small></span>
+                    <Icon name="arrowr" size={16} />
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {m.action && <div><button className="btn btn-sm btn-lacquer" onClick={m.action.run}>{m.action.label}</button></div>}
           </div>
         ))}
+        {msgs.length === 1 && !typing && (
+          <div className="mentor-quick">
+            {QUICK_QUESTIONS.map(q => <button key={q} type="button" className="btn btn-sm" onClick={() => send(q)}>{q}</button>)}
+          </div>
+        )}
         {typing && <div className="msg bot"><span className="typing"><i /><i /><i /></span></div>}
       </div>
       <form className="drawer-form" onSubmit={e => { e.preventDefault(); const v = text.trim(); if (v) { send(v); setText(''); } }}>
-        <input placeholder="Hỏi về một ký hiệu, hoặc kế hoạch học…" aria-label="Nhắn cho Mentor" value={text} onChange={e => setText(e.target.value)} />
+        <input placeholder="Hỏi về tiến độ, bài nên học, một ký hiệu…" aria-label="Nhắn cho Mentor" value={text} onChange={e => setText(e.target.value)} />
         <button className="iconbtn" style={{ background: 'var(--mentor)', color: 'var(--paper)' }} aria-label="Gửi"><Icon name="send" size={16} /></button>
       </form>
     </div>
