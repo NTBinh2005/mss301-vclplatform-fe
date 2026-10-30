@@ -25,7 +25,12 @@ const THEME_KEY = 'sm_theme';
 
 function readSavedTheme(): ThemeOption['id'] {
   if (typeof window === 'undefined') return 'jade';
-  const saved = window.localStorage.getItem(THEME_KEY);
+  let saved: string | null = null;
+  try {
+    saved = window.localStorage.getItem(THEME_KEY);
+  } catch {
+    // localStorage bị chặn (chế độ riêng tư / chặn cookie) → dùng bảng màu mặc định.
+  }
   if (saved && THEMES.some(t => t.id === saved)) return saved as ThemeOption['id'];
   return 'jade';
 }
@@ -35,7 +40,11 @@ export function applyTheme(id: ThemeOption['id']) {
     document.documentElement.dataset.theme = id;
   }
   if (typeof window !== 'undefined') {
-    window.localStorage.setItem(THEME_KEY, id);
+    try {
+      window.localStorage.setItem(THEME_KEY, id);
+    } catch {
+      // Không lưu được thì chỉ đổi màu cho phiên hiện tại.
+    }
     window.dispatchEvent(new CustomEvent('sm-theme-change', { detail: id }));
   }
 }
